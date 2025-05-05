@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Realtime Chat Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Use min-height for better content flow */
+            margin: 0;
+            flex-direction: column;
+            box-sizing: border-box; /* Ensure padding doesn't increase width */
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #name-area {
+            display: flex;
+            flex-direction: column;
+            width: 80%; /* Adjust width for smaller screens */
+            max-width: 400px; /* Limit maximum width on larger screens */
+            align-items: stretch; /* Make children take full width */
+            margin-bottom: 20px;
+        }
+
+        #name {
+            font-size: 1rem; /* Use rem for scalable font size */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem; /* Use rem for scalable font size */
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+
+        #chat-box {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: auto; /* Use auto to show scrollbar only when needed */
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 80%; /* Adjust width for smaller screens */
+            max-width: 400px; /* Limit maximum width on larger screens */
+            display: none;
+            box-sizing: border-box; /* Ensure padding doesn't increase width */
+        }
+
+        #message-area {
+            display: none;
+            width: 80%; /* Adjust width for smaller screens */
+            max-width: 400px; /* Limit maximum width on larger screens */
+            display: flex;
+            gap: 10px; /* Space between input and button */
+            box-sizing: border-box; /* Ensure padding doesn't increase width */
+        }
+
+        #message {
+            flex-grow: 1; /* Allow input to take remaining space */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem; /* Use rem for scalable font size */
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Realtime Chat Room</h2>
+
+    <div id="name-area">
+        <input type="text" id="name" placeholder="Enter your name">
+        <button onclick="joinChat()">Join Chat</button>
+    </div>
+
+    <div id="chat-box"></div>
+
+    <div id="message-area">
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "fake-api-key",
+            databaseURL: "https://nerds-79270-default-rtdb.firebaseio.com"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let userName = "";
+
+        function joinChat() {
+            const nameInput = document.getElementById('name').value;
+            if (nameInput.trim() !== "") {
+                userName = nameInput;
+                document.getElementById('name-area').style.display = 'none';
+                document.getElementById('chat-box').style.display = 'block';
+                document.getElementById('message-area').style.display = 'flex'; /* Use flex to align input and button */
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            if (message.trim() !== "") {
+                db.ref('messages').push({ name: userName, message });
+                document.getElementById('message').value = '';
+            }
+        }
+
+        // Add event listener to send message when Enter is pressed
+        document.getElementById('message').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        db.ref('messages').on('child_added', function(snapshot) {
+            const msg = snapshot.val();
+            const msgEl = document.createElement('div');
+            msgEl.textContent = msg.name + ': ' + msg.message;
+            document.getElementById('chat-box').appendChild(msgEl);
+            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+        });
+    </script>
+
+</body>
+</html>
