@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Game</title>
+  <style>
+    canvas {
+      background: #000;
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #0f0;
+    }
+    body {
+      text-align: center;
+      color: white;
+      font-family: sans-serif;
+      background-color: #111;
+    }
+    #overlay {
+      position: absolute;
+      top: 250px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    #scoreText {
+      font-size: 20px;
+      color: white;
+      margin: 10px 0;
+    }
+    #playAgain {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #0f0;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Snake Game</h1>
+  <canvas id="game" width="400" height="400"></canvas>
+  <p>Use arrow keys to play</p>
+  <div id="overlay">
+    <div id="scoreText"></div>
+    <button id="playAgain">Play Again</button>
+  </div>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const playAgainBtn = document.getElementById("playAgain");
+    const overlay = document.getElementById("overlay");
+    const scoreText = document.getElementById("scoreText");
+
+    const box = 20;
+    const canvasSize = 400;
+    const totalBoxes = canvasSize / box;
+
+    let snake, direction, food, gameOver, score, game, highScore = 0;
+
+    function initGame() {
+      snake = [{ x: 9 * box, y: 9 * box }];
+      direction = "";
+      food = {
+        x: Math.floor(Math.random() * totalBoxes) * box,
+        y: Math.floor(Math.random() * totalBoxes) * box
+      };
+      gameOver = false;
+      score = 0;
+      overlay.style.display = "none";
+      clearInterval(game);
+      game = setInterval(draw, 100);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+      else if (e.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+      else if (e.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+      else if (e.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+    });
+
+    playAgainBtn.addEventListener("click", initGame);
+
+    function drawGameOver() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+      ctx.fillStyle = "#f00";
+      ctx.font = "40px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("GAME OVER", canvasSize / 2, canvasSize / 2 - 40);
+
+      highScore = Math.max(highScore, score);
+      scoreText.innerHTML = `Your Score: ${score}<br>High Score: ${highScore}`;
+      overlay.style.display = "flex";
+    }
+
+    function draw() {
+      if (gameOver) {
+        drawGameOver();
+        clearInterval(game);
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "#0f0" : "#fff";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      }
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      let headX = snake[0].x;
+      let headY = snake[0].y;
+
+      if (direction === "LEFT") headX -= box;
+      if (direction === "UP") headY -= box;
+      if (direction === "RIGHT") headX += box;
+      if (direction === "DOWN") headY += box;
+
+      if (
+        headX < 0 || headY < 0 ||
+        headX >= canvasSize || headY >= canvasSize ||
+        snake.some((s, i) => i !== 0 && s.x === headX && s.y === headY)
+      ) {
+        gameOver = true;
+        return;
+      }
+
+      let newHead = { x: headX, y: headY };
+
+      if (headX === food.x && headY === food.y) {
+        score++;
+        food = {
+          x: Math.floor(Math.random() * totalBoxes) * box,
+          y: Math.floor(Math.random() * totalBoxes) * box
+        };
+      } else {
+        snake.pop();
+      }
+
+      snake.unshift(newHead);
+    }
+
+    initGame(); // start the game
+  </script>
+</body>
+</html>
