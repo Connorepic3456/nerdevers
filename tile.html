@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>15 Puzzle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 5px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .tile {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            background-color: #eee;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tile.empty {
+            background-color: #fff;
+            border: 2px dashed #ccc;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>15 Puzzle</h1>
+    <div class="puzzle-container" id="puzzle"></div>
+
+    <p id="message" class="message"></p>
+    <button onclick="restartGame()">Restart Game</button>
+
+    <script>
+        // Initialize the puzzle grid (4x4)
+        let puzzle = [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, null] // Null represents the empty space
+        ];
+
+        let emptyTile = { row: 3, col: 3 }; // Position of the empty tile (row, col)
+
+        // Function to create the puzzle tiles on the board
+        function renderPuzzle() {
+            const puzzleContainer = document.getElementById("puzzle");
+            puzzleContainer.innerHTML = ''; // Clear the board
+
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const tile = puzzle[row][col];
+                    const tileElement = document.createElement('div');
+                    tileElement.classList.add('tile');
+                    tileElement.innerText = tile ? tile : ''; // Empty tile will have no text
+                    if (!tile) {
+                        tileElement.classList.add('empty');
+                    }
+
+                    tileElement.onclick = () => moveTile(row, col);
+                    puzzleContainer.appendChild(tileElement);
+                }
+            }
+
+            // Check if the puzzle is solved
+            if (isPuzzleSolved()) {
+                document.getElementById("message").innerText = "Congratulations! You solved the puzzle!";
+            } else {
+                document.getElementById("message").innerText = "Move the tiles to solve the puzzle.";
+            }
+        }
+
+        // Function to move a tile
+        function moveTile(row, col) {
+            if (isAdjacent(row, col, emptyTile.row, emptyTile.col)) {
+                // Swap the clicked tile with the empty space
+                puzzle[emptyTile.row][emptyTile.col] = puzzle[row][col];
+                puzzle[row][col] = null;
+
+                // Update the empty tile position
+                emptyTile = { row, col };
+
+                renderPuzzle(); // Re-render the puzzle
+            }
+        }
+
+        // Function to check if two tiles are adjacent
+        function isAdjacent(row1, col1, row2, col2) {
+            return (Math.abs(row1 - row2) === 1 && col1 === col2) || (Math.abs(col1 - col2) === 1 && row1 === row2);
+        }
+
+        // Function to check if the puzzle is solved
+        function isPuzzleSolved() {
+            let counter = 1;
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    if (puzzle[row][col] !== (counter === 16 ? null : counter)) {
+                        return false;
+                    }
+                    counter++;
+                }
+            }
+            return true;
+        }
+
+        // Function to shuffle the puzzle (randomize)
+        function shufflePuzzle() {
+            let moves = 1000;
+            while (moves > 0) {
+                const directions = [
+                    { row: 0, col: -1 }, // Left
+                    { row: 0, col: 1 },  // Right
+                    { row: -1, col: 0 }, // Up
+                    { row: 1, col: 0 },  // Down
+                ];
+
+                // Random move
+                const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+                const newRow = emptyTile.row + randomDirection.row;
+                const newCol = emptyTile.col + randomDirection.col;
+
+                if (newRow >= 0 && newRow < 4 && newCol >= 0 && newCol < 4) {
+                    // Swap the empty tile with the adjacent tile
+                    puzzle[emptyTile.row][emptyTile.col] = puzzle[newRow][newCol];
+                    puzzle[newRow][newCol] = null;
+                    emptyTile = { row: newRow, col: newCol };
+                    moves--;
+                }
+            }
+
+            renderPuzzle(); // Re-render the puzzle after shuffling
+        }
+
+        // Function to restart the game
+        function restartGame() {
+            // Reset the puzzle to its solved state
+            puzzle = [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, null]
+            ];
+            emptyTile = { row: 3, col: 3 };
+            shufflePuzzle();
+        }
+
+        // Initialize the game
+        shufflePuzzle();
+    </script>
+
+</body>
+</html>
