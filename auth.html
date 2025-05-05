@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Protected Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .password-box {
+            margin: 20px;
+        }
+
+        .message {
+            font-size: 18px;
+            color: red;
+            display: none;
+        }
+
+        #linkButton {
+            display: none;
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        #linkButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Password Form -->
+    <div id="passwordForm">
+        <h2>Enter Password to View Content</h2>
+        <input type="password" id="password" placeholder="Password" class="password-box">
+        <button onclick="checkPassword()">Submit</button>
+        <p id="errorMessage" class="message">Incorrect password. Please try again.</p>
+    </div>
+
+    <!-- Hidden Link Button (real link in an anchor tag) -->
+    <a id="linkButton" href="https://sites.google.com/view/nerdyvers/chat" target="_blank">Access Protected Content</a>
+
+    <script>
+        function checkPassword() {
+            var enteredPassword = document.getElementById("password").value;
+            var correctPassword = "imanerd";
+            var errorMessage = document.getElementById("errorMessage");
+            var linkButton = document.getElementById("linkButton");
+
+            if (enteredPassword === correctPassword) {
+                document.getElementById("passwordForm").style.display = "none";
+                linkButton.style.display = "inline-block";
+            } else {
+                errorMessage.style.display = "block";
+            }
+        }
+    </script>
+
+</body>
+</html>
