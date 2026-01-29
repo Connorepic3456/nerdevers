@@ -1,0 +1,94 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>In-Browser PC Tester</title>
+<style>
+  body { font-family: sans-serif; text-align: center; padding: 30px; background: #111; color: #eee; }
+  button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  canvas { display: block; margin: 20px auto; border: 1px solid #555; }
+  #results { margin-top: 20px; font-size: 18px; }
+</style>
+</head>
+<body>
+<h1>PC Tester</h1>
+<button id="start">Start Test</button>
+<div id="results"></div>
+<canvas id="gpuCanvas" width="300" height="150"></canvas>
+
+<script>
+async function cpuTest() {
+    const start = performance.now();
+    let sum = 0;
+    for (let i = 0; i < 1e7; i++) {
+        sum += Math.sqrt(i);
+    }
+    const end = performance.now();
+    return end - start; // milliseconds
+}
+
+async function memoryTest() {
+    const start = performance.now();
+    try {
+        const arr = new Array(50_000_000).fill(0); // ~200MB allocation
+        arr[0] = 1;
+    } catch {
+        return 9999; // failed memory test
+    }
+    const end = performance.now();
+    return end - start;
+}
+
+async function gpuTest() {
+    return new Promise(resolve => {
+        const canvas = document.getElementById('gpuCanvas');
+        const gl = canvas.getContext('webgl');
+        if (!gl) return resolve(0);
+
+        let frames = 0;
+        const totalFrames = 60;
+        function render() {
+            gl.clearColor(Math.random(), Math.random(), Math.random(), 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            frames++;
+            if (frames < totalFrames) {
+                requestAnimationFrame(render);
+            } else {
+                resolve(frames); // higher is better
+            }
+        }
+        render();
+    });
+}
+
+function calculateScore(cpuTime, memTime, gpuFrames) {
+    let cpuScore = Math.max(0, 100 - cpuTime/50);       // lower CPU time → higher score
+    let memScore = Math.max(0, 100 - memTime/50);       // lower memory time → higher score
+    let gpuScore = Math.min(100, gpuFrames * 1.5);      // max 100
+    return ((cpuScore + memScore + gpuScore)/3).toFixed(1);
+}
+
+document.getElementById('start').onclick = async () => {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerText = "Running CPU test...";
+    const cpuTime = await cpuTest();
+    
+    resultsDiv.innerText = "Running Memory test...";
+    const memTime = await memoryTest();
+    
+    resultsDiv.innerText = "Running GPU test...";
+    const gpuFrames = await gpuTest();
+    
+    const score = calculateScore(cpuTime, memTime, gpuFrames);
+    
+    resultsDiv.innerHTML = `
+        <p>CPU Test Time: ${cpuTime.toFixed(1)} ms</p>
+        <p>Memory Test Time: ${memTime.toFixed(1)} ms</p>
+        <p>GPU FPS Sample: ${gpuFrames}</p>
+        <h2>Overall PC Rating: ${score}/100</h2>
+    `;
+};
+</script>
+</body>
+</html>
