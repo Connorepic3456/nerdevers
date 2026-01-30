@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Anti-Spam Edition</title>
+    <title>Global Ping - Admin Edition</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; transition: background 0.1s ease; text-align: center;
+            min-height: 100vh; margin: 0; transition: background 0.1s ease; text-align: center;
         }
         #pingBtn { 
-            width: 200px; height: 200px; border-radius: 50%; border: none; 
-            background: #334155; color: white; font-size: 2.2rem; font-weight: bold; cursor: pointer; 
+            width: 180px; height: 180px; border-radius: 50%; border: none; 
+            background: #334155; color: white; font-size: 2rem; font-weight: bold; cursor: pointer; 
             transition: 0.2s; z-index: 10;
         }
         .ready { 
@@ -20,10 +20,25 @@
             box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); 
         }
         #pingBtn:active { transform: scale(0.9); }
-        #pingBtn:disabled { background: #1e293b !important; cursor: not-allowed; box-shadow: none; }
-        #status { margin-top: 25px; color: #94a3b8; font-weight: bold; padding: 0 20px; }
-        #counterContainer { margin-top: 40px; font-size: 1.2rem; color: #60a5fa; }
-        #countNumber { font-size: 2.5rem; display: block; font-weight: 800; color: #fff; }
+        #pingBtn:disabled { background: #1e293b !important; cursor: not-allowed; }
+        #status { margin-top: 20px; color: #94a3b8; font-weight: bold; }
+        
+        .stats-grid { display: flex; gap: 40px; margin-top: 30px; margin-bottom: 30px;}
+        .stat-box { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.8rem; color: #60a5fa; text-transform: uppercase; }
+        .stat-value { font-size: 2rem; font-weight: 800; }
+        
+        /* Admin Panel Styles */
+        #adminPanel { 
+            display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
+            width: 90%; max-width: 400px; margin-top: 20px; border: 1px solid #334155;
+        }
+        .ban-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #0f172a; padding: 8px 12px; margin: 5px 0; border-radius: 6px; font-size: 0.9rem;
+        }
+        .unban-btn { background: #ef4444; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+
         .flash { background: #064e3b !important; }
     </style>
 </head>
@@ -32,17 +47,28 @@
     <button id="pingBtn">TAP ME</button>
     <p id="status">Click once to enable sound!</p>
 
-    <div id="counterContainer">
-        TOTAL PINGS
-        <span id="countNumber">0</span>
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="stat-label">Online</span>
+            <span id="onlineCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Total Pings</span>
+            <span id="countNumber" class="stat-value">0</span>
+        </div>
+    </div>
+
+    <div id="adminPanel">
+        <h3 style="margin-top:0">🛡️ Admin: Banned IPs</h3>
+        <div id="banList"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // --- CONFIG ---
-        const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
+        // 1. SET YOUR IP HERE
+        const adminIPs = ['173.232.2.214']; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyAxTgZNo7cVIoD2oO00q1Z2B6xj8x-nRCU",
@@ -55,50 +81,84 @@
             measurementId: "G-DQY92GJFZP"
         };
 
-        // Initialize
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const pingRef = db.ref('global_ping_event');
         const counterRef = db.ref('ping_count');
         const blacklistRef = db.ref('blacklist');
+        const onlineRef = db.ref('online_users');
 
-        const pingSound = new Audio(mySoundLink);
+        const pingSound = new Audio('https://connorepic3456.github.io/nerdevers/ping.mp3');
         const btn = document.getElementById('pingBtn');
         const status = document.getElementById('status');
         const countDisplay = document.getElementById('countNumber');
+        const onlineDisplay = document.getElementById('onlineCount');
+        const adminPanel = document.getElementById('adminPanel');
+        const banList = document.getElementById('banList');
 
         let audioUnlocked = false;
         let userIP = "";
         let isBanned = false;
         let clickTimestamps = [];
 
-        // 1. Check IP and Blacklist Status
+        // 2. IP & Admin Check
         fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(data => {
-                userIP = data.ip.replace(/\./g, '_'); // Replace dots for Firebase
-                
+                const rawIP = data.ip;
+                userIP = rawIP.replace(/\./g, '_');
+
+                // Show Admin Panel if you are an admin
+                if (adminIPs.includes(rawIP)) {
+                    adminPanel.style.display = 'block';
+                    loadBlacklist();
+                }
+
                 blacklistRef.child(userIP).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         isBanned = true;
                         btn.disabled = true;
                         btn.innerText = "BANNED";
-                        status.innerHTML = "🚫 Access Revoked.<br>Reason: Extreme Spamming";
-                        status.style.color = "#ef4444";
+                        status.innerText = "ACCESS REVOKED FOR SPAM";
                     }
                 });
             });
 
-        // 2. Counter Listener
-        counterRef.on('value', (snapshot) => {
-            countDisplay.innerText = (snapshot.val() || 0).toLocaleString();
-        });
+        // 3. Admin Tools: Load and Unban
+        function loadBlacklist() {
+            blacklistRef.on('value', (snap) => {
+                banList.innerHTML = "";
+                snap.forEach((child) => {
+                    const ipKey = child.key;
+                    const displayIP = ipKey.replace(/_/g, '.');
+                    const item = document.createElement('div');
+                    item.className = 'ban-item';
+                    item.innerHTML = `
+                        <span>${displayIP}</span>
+                        <button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>
+                    `;
+                    banList.appendChild(item);
+                });
+            });
+        }
 
-        // 3. Ping/Click Logic
+        window.unbanUser = function(ipKey) {
+            blacklistRef.child(ipKey).remove();
+        };
+
+        // 4. Online Presence
+        const myPresenceRef = onlineRef.push();
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                myPresenceRef.onDisconnect().remove();
+                myPresenceRef.set(true);
+            }
+        });
+        onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
+
+        // 5. Ping & Spam Logic
         btn.addEventListener('click', () => {
             if (isBanned) return;
-
-            // First click unlocks audio
             if (!audioUnlocked) {
                 pingSound.play().then(() => {
                     pingSound.pause();
@@ -109,30 +169,24 @@
                     status.innerText = "ONLINE";
                 });
             } else {
-                // Check for spam (10 clicks in 30 seconds)
                 const now = Date.now();
                 clickTimestamps.push(now);
                 if (clickTimestamps.length > 10) clickTimestamps.shift();
-
                 if (clickTimestamps.length === 10 && (now - clickTimestamps[0]) < 30000) {
-                    blacklistRef.child(userIP).set({
-                        bannedAt: firebase.database.ServerValue.TIMESTAMP,
-                        reason: "Exceeded 10 pings per 30s"
-                    });
+                    blacklistRef.child(userIP).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP });
                     return;
                 }
-
-                // If safe, send ping
                 pingRef.set(firebase.database.ServerValue.TIMESTAMP);
-                counterRef.transaction((count) => (count || 0) + 1);
+                counterRef.transaction((c) => (c || 0) + 1);
             }
         });
 
-        // 4. Listen for Global Pings
-        pingRef.on('value', (snapshot) => {
+        // 6. Global Listeners
+        counterRef.on('value', (s) => countDisplay.innerText = (s.val() || 0).toLocaleString());
+        pingRef.on('value', () => {
             if (audioUnlocked && !isBanned) {
                 pingSound.currentTime = 0;
-                pingSound.play().catch(e => console.log("Audio waiting..."));
+                pingSound.play().catch(() => {});
             }
             document.body.classList.add('flash');
             setTimeout(() => document.body.classList.remove('flash'), 100);
