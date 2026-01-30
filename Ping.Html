@@ -1,48 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Ping</title>
     <style>
         body { 
             background: #0f172a; 
             color: white; 
-            font-family: sans-serif; 
+            font-family: system-ui, -apple-system, sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
             height: 100vh; 
             margin: 0; 
-            transition: background 0.1s;
+            transition: background 0.1s ease;
+            overflow: hidden;
         }
         #pingBtn { 
-            width: 200px; 
-            height: 200px; 
+            width: 220px; 
+            height: 220px; 
             border-radius: 50%; 
             border: none; 
-            background: #ef4444; 
+            background: linear-gradient(135deg, #ef4444, #b91c1c); 
             color: white; 
             font-size: 2.5rem; 
             font-weight: bold; 
             cursor: pointer; 
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); 
-            transition: transform 0.1s;
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.4); 
+            transition: transform 0.1s, box-shadow 0.1s;
+            z-index: 10;
         }
-        #pingBtn:active { transform: scale(0.9); }
-        #status { margin-top: 20px; color: #94a3b8; font-size: 0.9rem; }
+        #pingBtn:active { 
+            transform: scale(0.92); 
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+        }
+        #status { 
+            margin-top: 30px; 
+            color: #94a3b8; 
+            font-size: 1.1rem;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .flash {
+            background: #450a0a !important;
+        }
     </style>
 </head>
 <body>
 
     <button id="pingBtn">PING</button>
-    <p id="status">Tap the button to alert everyone!</p>
+    <p id="status">Tap anywhere once to enable sound!</p>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // Your specific config
+        // 1. Your Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAxTgZNo7cVIoD2oO00q1Z2B6xj8x-nRCU",
             authDomain: "nerds-79270.firebaseapp.com",
@@ -62,24 +77,44 @@
         const pingBtn = document.getElementById('pingBtn');
         const statusText = document.getElementById('status');
         
-        // A standard notification sound
-        const pingSound = new Audio('https://www.soundjay.com/buttons/sounds/button-37.mp3');
+        // Use a reliable public sound URL
+        const pingSound = new Audio('https://raw.githubusercontent.com/lucasfcosta/back-end-ping/master/ping.mp3');
 
-        // 1. Send the Ping
-        pingBtn.addEventListener('click', () => {
+        // 2. AUDIO UNLOCK LOGIC
+        // Browsers block sound until the user interacts. 
+        // This listener "primes" the audio on the first click.
+        let audioUnlocked = false;
+        window.addEventListener('click', () => {
+            if (!audioUnlocked) {
+                pingSound.play().then(() => {
+                    pingSound.pause();
+                    pingSound.currentTime = 0;
+                    audioUnlocked = true;
+                    statusText.innerText = "Ready! Pinging everyone...";
+                    console.log("Audio Unlocked");
+                }).catch(e => console.error("Audio block:", e));
+            }
+        }, { once: false });
+
+        // 3. SEND PING (Write to DB)
+        pingBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent trigger from firing twice
             pingRef.set(firebase.database.ServerValue.TIMESTAMP);
         });
 
-        // 2. Hear the Ping (for everyone)
+        // 4. RECEIVE PING (Listen to DB)
         pingRef.on('value', (snapshot) => {
-            // Browsers block sound until you click the page once
-            pingSound.play().catch(() => {
-                statusText.innerText = "🔊 Tap once to enable audio!";
-            });
+            // Play the sound
+            if (audioUnlocked) {
+                pingSound.currentTime = 0;
+                pingSound.play().catch(err => console.log("Play failed:", err));
+            }
 
-            // Flash effect
-            document.body.style.background = "#450a0a";
-            setTimeout(() => { document.body.style.background = "#0f172a"; }, 100);
+            // Visual Flash Effect
+            document.body.classList.add('flash');
+            setTimeout(() => {
+                document.body.classList.remove('flash');
+            }, 100);
         });
     </script>
 </body>
