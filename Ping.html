@@ -124,7 +124,7 @@
         let audioUnlocked = false;
         let isBanned = false;
 
-        // 1. UNIQUE DEVICE ID LOGIC
+        // 1. UNIQUE DEVICE ID
         let myUID = localStorage.getItem('userUID');
         if (!myUID) {
             myUID = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -149,30 +149,57 @@
             showAdminPanel();
         }
 
-        // 2. BAN LISTENER (Blocks interaction if UID is blacklisted)
+        // 2. GLOBAL BAN LISTENER (Handles the user's own status)
         blacklistRef.child(myUID).on('value', (snap) => {
             if (snap.exists()) {
                 isBanned = true;
                 btn.disabled = true;
                 btn.innerText = "BANNED";
                 status.innerText = "ACCESS REVOKED";
-                myPresenceRef.remove();
+                myPresenceRef.remove(); // Remove them from online list immediately
             } else {
-                // If unbanned in real-time
                 isBanned = false;
                 btn.disabled = false;
-                if(audioUnlocked) {
-                    btn.innerText = "PING";
-                    status.innerText = "ONLINE";
-                } else {
-                    btn.innerText = "TAP ME";
-                    status.innerText = "Click once to enable sound!";
-                }
+                btn.innerText = audioUnlocked ? "PING" : "TAP ME";
+                status.innerText = audioUnlocked ? "ONLINE" : "Click once to enable sound!";
+                // Re-add to online list if unbanned
+                updatePresence(); 
             }
         });
 
-        // 3. REAL-TIME ADMIN CONSOLE LOGIC
+        // 3. ADMIN DASHBOARD REAL-TIME LOGIC
         function loadAdminData() {
+            // This function handles the "Online Count" and the "Live Devices" list simultaneously
+            // It ensures that only NON-BANNED users are counted and displayed
+            onlineRef.on('value', (onlineSnap) => {
+                blacklistRef.once('value', (banSnap) => {
+                    const bans = banSnap.val() || {};
+                    let activeCount = 0;
+                    
+                    deviceList.innerHTML = "";
+                    
+                    onlineSnap.forEach((child) => {
+                        const data = child.val();
+                        const uid = data.uid;
+                        
+                        // Check if this online UID is in the ban list
+                        if (!bans[uid]) {
+                            activeCount++;
+                            // Add to the admin view
+                            const item = document.createElement('div');
+                            item.className = 'list-item';
+                            item.innerHTML = `
+                                <div><b style="color:#60a5fa">${data.device}</b> ${uid === myUID ? '<small>(You)</small>' : ''}<br><small>${uid}</small></div>
+                                <button class="ban-btn" onclick="manualBan('${uid}')">Ban ID</button>
+                            `;
+                            deviceList.appendChild(item);
+                        }
+                    });
+                    
+                    onlineDisplay.innerText = activeCount;
+                });
+            });
+
             // Watch Banned List
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
@@ -185,59 +212,33 @@
                     banList.appendChild(item);
                 });
             });
-
-            // Watch Online List (Cross-referenced with Bans)
-            onlineRef.on('value', (snap) => {
-                deviceList.innerHTML = "";
-                let count = 0;
-                snap.forEach((child) => {
-                    const data = child.val();
-                    const uid = data.uid;
-                    if (!uid) return;
-
-                    // Only show in "Live" if they aren't already banned
-                    blacklistRef.child(uid).once('value', (bSnap) => {
-                        if (!bSnap.exists()) {
-                            count++;
-                            const item = document.createElement('div');
-                            item.className = 'list-item';
-                            item.innerHTML = `
-                                <div><b style="color:#60a5fa">${data.device}</b> ${uid === myUID ? '<small>(You)</small>' : ''}<br><small>${uid}</small></div>
-                                <button class="ban-btn" onclick="manualBan('${uid}')">Ban ID</button>
-                            `;
-                            deviceList.appendChild(item);
-                        }
-                    });
-                });
-            });
         }
 
         window.manualBan = (uid) => {
-            if(confirm("Ban this device immediately?")) blacklistRef.child(uid).set(true);
+            if(confirm("Ban this device?")) blacklistRef.child(uid).set(true);
         };
         window.unbanUser = (uid) => {
-            if(confirm("Restore access for this device?")) blacklistRef.child(uid).remove();
+            if(confirm("Restore access?")) blacklistRef.child(uid).remove();
         };
         window.resetGlobalCounter = () => { 
-            if(confirm("Reset global ping count to 0?")) counterRef.set(0); 
+            if(confirm("Reset global ping count?")) counterRef.set(0); 
         };
 
         // 4. PRESENCE SYSTEM
         const myPresenceRef = onlineRef.push();
-        db.ref('.info/connected').on('value', (snap) => {
-            if (snap.val() === true) {
-                myPresenceRef.onDisconnect().remove();
-                if (!isBanned) {
+        function updatePresence() {
+            db.ref('.info/connected').once('value', (snap) => {
+                if (snap.val() === true && !isBanned) {
                     const ua = navigator.userAgent;
                     const dev = ua.includes("Win") ? "Windows" : ua.includes("Mac") ? "Mac" : ua.includes("Android") ? "Android" : "iPhone";
                     myPresenceRef.set({ device: dev, uid: myUID });
+                    myPresenceRef.onDisconnect().remove();
                 }
-            }
-        });
+            });
+        }
+        updatePresence();
 
-        onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
-
-        // 5. PINGING LOGIC
+        // 5. PING LOGIC
         btn.addEventListener('click', () => {
             if (isBanned) return;
             if (!audioUnlocked) {
