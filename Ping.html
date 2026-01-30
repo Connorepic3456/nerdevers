@@ -1,246 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Master Admin</title>
-    <style>
-        body { 
-            background: #0f172a; color: white; font-family: system-ui, sans-serif; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            min-height: 100vh; margin: 0; transition: background 0.1s ease; text-align: center;
-        }
-        #pingBtn { 
-            width: 180px; height: 180px; border-radius: 50%; border: none; 
-            background: #334155; color: white; font-size: 2rem; font-weight: bold; cursor: pointer; 
-            transition: 0.2s; z-index: 10;
-        }
-        .ready { 
-            background: linear-gradient(135deg, #22c55e, #16a34a) !important; 
-            box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); 
-        }
-        #pingBtn:active { transform: scale(0.9); }
-        #pingBtn:disabled { background: #1e293b !important; cursor: not-allowed; opacity: 0.5; }
-        
-        #status { margin-top: 20px; color: #94a3b8; font-weight: bold; }
-        
-        .stats-grid { display: flex; gap: 40px; margin-top: 30px; margin-bottom: 30px;}
-        .stat-box { display: flex; flex-direction: column; }
-        .stat-label { font-size: 0.8rem; color: #60a5fa; text-transform: uppercase; }
-        .stat-value { font-size: 2rem; font-weight: 800; }
-        
-        #adminPanel { 
-            display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
-            width: 95%; max-width: 550px; margin-top: 20px; border: 1px solid #334155;
-            text-align: left; margin-bottom: 50px;
-        }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .admin-section { margin-bottom: 25px; }
-        .list-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: #0f172a; padding: 10px 14px; margin: 6px 0; border-radius: 8px; font-size: 0.85rem;
-        }
-        .action-btns { display: flex; gap: 8px; }
-        .reset-btn { background: #6366f1; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
-        .ban-btn { background: #f97316; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
-        .unban-btn { background: #ef4444; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
-        .device-info { color: #94a3b8; font-style: italic; }
+// ... [Keep your Firebase Config and Initializations as they are] ...
 
-        .flash { background: #064e3b !important; }
-    </style>
-</head>
-<body>
+// 1. Updated Manual Ban Function with Auto-Cleanup
+window.manualBan = function(ipKey) {
+    if(confirm("Are you sure you want to ban this IP?")) {
+        // Add to blacklist
+        blacklistRef.child(ipKey).set({ 
+            bannedAt: firebase.database.ServerValue.TIMESTAMP, 
+            reason: "Manual Admin Ban" 
+        }).then(() => {
+            // Optional: Clean up their online presence immediately from the admin view
+            console.log("User banned successfully.");
+        });
+    }
+};
 
-    <button id="pingBtn">TAP ME</button>
-    <p id="status">Click once to enable sound!</p>
+// 2. Modified Online Users Listener
+// This ensures that as soon as you ban someone, the list updates
+function loadAdminData() {
+    blacklistRef.on('value', (snap) => {
+        banList.innerHTML = "";
+        snap.forEach((child) => {
+            const ipKey = child.key;
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <span>${ipKey.replace(/_/g, '.')}</span>
+                <button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>
+            `;
+            banList.appendChild(item);
+        });
+    });
 
-    <div class="stats-grid">
-        <div class="stat-box">
-            <span class="stat-label">Online</span>
-            <span id="onlineCount" class="stat-value">0</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">Total Pings</span>
-            <span id="countNumber" class="stat-value">0</span>
-        </div>
-    </div>
-
-    <div id="adminPanel">
-        <div class="admin-header">
-            <h2 style="margin:0; color:#fbbf24; font-size: 1.2rem;">🛡️ Master Admin Console</h2>
-            <button class="reset-btn" onclick="resetGlobalCounter()">Reset Global Count</button>
-        </div>
-        
-        <div class="admin-section">
-            <strong style="color: #60a5fa;">📱 Live Devices (Kick/Ban):</strong>
-            <div id="deviceList"></div>
-        </div>
-
-        <div class="admin-section">
-            <strong style="color: #ef4444;">🚫 Banned Database:</strong>
-            <div id="banList"></div>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
-    <script>
-        const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAxTgZNo7cVIoD2oO00q1Z2B6xj8x-nRCU",
-            authDomain: "nerds-79270.firebaseapp.com",
-            databaseURL: "https://nerds-79270-default-rtdb.firebaseio.com",
-            projectId: "nerds-79270",
-            storageBucket: "nerds-79270.firebasestorage.app",
-            messagingSenderId: "153367226684",
-            appId: "1:153367226684:web:c58421737c993346dfd639",
-            measurementId: "G-DQY92GJFZP"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const pingRef = db.ref('global_ping_event');
-        const counterRef = db.ref('ping_count');
-        const blacklistRef = db.ref('blacklist');
-        const onlineRef = db.ref('online_users');
-        const adminsRef = db.ref('admins');
-
-        const pingSound = new Audio(mySoundLink);
-        const btn = document.getElementById('pingBtn');
-        const status = document.getElementById('status');
-        const countDisplay = document.getElementById('countNumber');
-        const onlineDisplay = document.getElementById('onlineCount');
-        const adminPanel = document.getElementById('adminPanel');
-        const banList = document.getElementById('banList');
-        const deviceList = document.getElementById('deviceList');
-
-        let audioUnlocked = false;
-        let userIP = "";
-        let isBanned = false;
-        let clickTimestamps = [];
-
-        function getDeviceInfo() {
-            const ua = navigator.userAgent;
-            if (ua.includes("Win")) return "Windows PC";
-            if (ua.includes("Mac")) return "MacBook/Mac";
-            if (ua.includes("iPhone")) return "iPhone";
-            if (ua.includes("Android")) return "Android Phone";
-            return "Mobile Device";
-        }
-
-        fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-                const rawIP = data.ip;
-                userIP = rawIP.replace(/\./g, '_');
-
-                adminsRef.once('value', (snapshot) => {
-                    if (!snapshot.exists()) {
-                        adminsRef.child(userIP).set({
-                            addedAt: firebase.database.ServerValue.TIMESTAMP,
-                            role: "Master"
-                        });
-                        alert("Setup Complete: You are now the Admin!");
-                        location.reload();
-                    } else if (snapshot.hasChild(userIP)) {
-                        adminPanel.style.display = 'block';
-                        loadAdminData();
-                    }
-                });
-
-                blacklistRef.child(userIP).on('value', (snapshot) => {
-                    if (snapshot.exists()) {
-                        isBanned = true;
-                        btn.disabled = true;
-                        btn.innerText = "BANNED";
-                        status.style.color = "#ef4444";
-                        status.innerText = "ACCESS REVOKED BY ADMIN";
-                    }
-                });
-            });
-
-        function loadAdminData() {
-            blacklistRef.on('value', (snap) => {
-                banList.innerHTML = "";
-                snap.forEach((child) => {
-                    const ipKey = child.key;
+    onlineRef.on('value', (snap) => {
+        deviceList.innerHTML = "";
+        snap.forEach((child) => {
+            const data = child.val();
+            const ipKey = data.ipKey;
+            
+            // Skip rendering if this user is already in the blacklist
+            blacklistRef.child(ipKey).once('value', (banSnap) => {
+                if (!banSnap.exists()) {
                     const item = document.createElement('div');
                     item.className = 'list-item';
-                    item.innerHTML = `<span>${ipKey.replace(/_/g, '.')}</span><button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>`;
-                    banList.appendChild(item);
-                });
-            });
-
-            onlineRef.on('value', (snap) => {
-                deviceList.innerHTML = "";
-                snap.forEach((child) => {
-                    const data = child.val();
-                    const ipKey = data.ipKey;
-                    const item = document.createElement('div');
-                    item.className = 'list-item';
-                    const actionHtml = (ipKey !== userIP) ? `<button class="ban-btn" onclick="manualBan('${ipKey}')">Ban IP</button>` : `<span style="color:#60a5fa; font-weight:bold;">(YOU)</span>`;
-                    item.innerHTML = `<div><span class="device-info">${data.device || 'Unknown'}</span><br><small style="color:#4b5563">${ipKey.replace(/_/g, '.')}</small></div><div class="action-btns">${actionHtml}</div>`;
+                    const actionHtml = (ipKey !== userIP) 
+                        ? `<button class="ban-btn" onclick="manualBan('${ipKey}')">Ban IP</button>` 
+                        : `<span style="color:#60a5fa; font-weight:bold;">(YOU)</span>`;
+                    
+                    item.innerHTML = `
+                        <div>
+                            <span class="device-info">${data.device || 'Unknown'}</span><br>
+                            <small style="color:#4b5563">${ipKey.replace(/_/g, '.')}</small>
+                        </div>
+                        <div class="action-btns">${actionHtml}</div>
+                    `;
                     deviceList.appendChild(item);
-                });
-            });
-        }
-
-        window.manualBan = function(ipKey) {
-            if(confirm("Are you sure you want to ban this IP?")) {
-                blacklistRef.child(ipKey).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP, reason: "Manual Admin Ban" });
-            }
-        };
-
-        window.unbanUser = function(ipKey) {
-            blacklistRef.child(ipKey).remove();
-        };
-
-        window.resetGlobalCounter = function() {
-            if(confirm("WARNING: This will reset the global ping count to 0 for everyone. Continue?")) {
-                counterRef.set(0);
-            }
-        };
-
-        const myPresenceRef = onlineRef.push();
-        db.ref('.info/connected').on('value', (snap) => {
-            if (snap.val() === true) {
-                myPresenceRef.onDisconnect().remove();
-                myPresenceRef.set({ device: getDeviceInfo(), ipKey: userIP, connectedAt: firebase.database.ServerValue.TIMESTAMP });
-            }
-        });
-        onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
-
-        btn.addEventListener('click', () => {
-            if (isBanned) return;
-            if (!audioUnlocked) {
-                pingSound.play().then(() => {
-                    pingSound.pause(); pingSound.currentTime = 0;
-                    audioUnlocked = true;
-                    btn.classList.add('ready'); btn.innerText = "PING"; status.innerText = "ONLINE";
-                });
-            } else {
-                const now = Date.now();
-                clickTimestamps.push(now);
-                if (clickTimestamps.length > 10) clickTimestamps.shift();
-                if (clickTimestamps.length === 10 && (now - clickTimestamps[0]) < 30000) {
-                    blacklistRef.child(userIP).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP, reason: "Spam" });
-                    return;
                 }
-                pingRef.set(firebase.database.ServerValue.TIMESTAMP);
-                counterRef.transaction((c) => (c || 0) + 1);
-            }
+            });
         });
+    });
+}
 
-        counterRef.on('value', (s) => countDisplay.innerText = (s.val() || 0).toLocaleString());
-        pingRef.on('value', () => {
-            if (audioUnlocked && !isBanned) {
-                pingSound.currentTime = 0; pingSound.play().catch(() => {});
+// 3. Force "Kick" on Banned Users
+// This listener runs for every user; if their IP appears in blacklist, they are locked out instantly
+function setupBanListener(currentIP) {
+    blacklistRef.child(currentIP).on('value', (snapshot) => {
+        if (snapshot.exists()) {
+            isBanned = true;
+            btn.disabled = true;
+            btn.classList.remove('ready');
+            btn.innerText = "BANNED";
+            status.style.color = "#ef4444";
+            status.innerText = "ACCESS REVOKED BY ADMIN";
+            
+            // Remove them from the online list since they are no longer active
+            myPresenceRef.remove(); 
+        } else {
+            // Handle unban in real-time
+            if (isBanned) {
+                isBanned = false;
+                btn.disabled = false;
+                btn.innerText = audioUnlocked ? "PING" : "TAP ME";
+                status.style.color = "#94a3b8";
+                status.innerText = audioUnlocked ? "ONLINE" : "Click once to enable sound!";
+                if (audioUnlocked) btn.classList.add('ready');
             }
-            document.body.classList.add('flash');
-            setTimeout(() => document.body.classList.remove('flash'), 100);
+        }
+    });
+}
+
+// 4. Update the IP Fetching block to include the new listener
+fetch('https://api.ipify.org?format=json')
+    .then(res => res.json())
+    .then(data => {
+        const rawIP = data.ip;
+        userIP = rawIP.replace(/\./g, '_');
+        
+        // Start watching for ban status immediately
+        setupBanListener(userIP);
+
+        adminsRef.once('value', (snapshot) => {
+            if (!snapshot.exists()) {
+                adminsRef.child(userIP).set({
+                    addedAt: firebase.database.ServerValue.TIMESTAMP,
+                    role: "Master"
+                });
+                alert("Setup Complete: You are now the Admin!");
+                location.reload();
+            } else if (snapshot.hasChild(userIP)) {
+                adminPanel.style.display = 'block';
+                loadAdminData();
+            }
         });
-    </script>
-</body>
-</html>
+    });
