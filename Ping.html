@@ -36,6 +36,8 @@
         }
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .admin-section { margin-bottom: 25px; }
+        .list-container { max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; }
+        
         .list-item { 
             display: flex; justify-content: space-between; align-items: center; 
             background: #0f172a; padding: 10px 14px; margin: 6px 0; border-radius: 8px; font-size: 0.85rem;
@@ -73,12 +75,12 @@
         
         <div class="admin-section">
             <strong style="color: #60a5fa;">📱 Live Devices (Unique ID):</strong>
-            <div id="deviceList"></div>
+            <div id="deviceList" class="list-container"></div>
         </div>
 
         <div class="admin-section">
             <strong style="color: #ef4444;">🚫 Banned Database:</strong>
-            <div id="banList"></div>
+            <div id="banList" class="list-container"></div>
         </div>
     </div>
 
@@ -89,7 +91,7 @@
 
     <script>
         // --- CONFIG ---
-        const ADMIN_PASSWORD = "taco"; 
+        const ADMIN_PASSWORD = "your_password_here"; 
         const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
 
         const firebaseConfig = {
@@ -123,7 +125,6 @@
         let isBanned = false;
 
         // 1. UNIQUE DEVICE ID LOGIC
-        // This generates a random ID for each laptop so they aren't the same
         let myUID = localStorage.getItem('userUID');
         if (!myUID) {
             myUID = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -133,20 +134,22 @@
         function promptAdmin() {
             const pass = prompt("Enter Master Admin Password:");
             if (pass === ADMIN_PASSWORD) {
-                adminPanel.style.display = 'block';
-                document.getElementById('adminLink').style.display = 'none';
-                localStorage.setItem('isAdmin', 'true');
-                loadAdminData();
+                showAdminPanel();
             } else { alert("Wrong password."); }
         }
 
-        if (localStorage.getItem('isAdmin') === 'true') {
+        function showAdminPanel() {
             adminPanel.style.display = 'block';
             document.getElementById('adminLink').style.display = 'none';
+            localStorage.setItem('isAdmin', 'true');
             loadAdminData();
         }
 
-        // 2. BAN LISTENER (Using UID instead of IP)
+        if (localStorage.getItem('isAdmin') === 'true') {
+            showAdminPanel();
+        }
+
+        // 2. BAN LISTENER (Blocks interaction if UID is blacklisted)
         blacklistRef.child(myUID).on('value', (snap) => {
             if (snap.exists()) {
                 isBanned = true;
@@ -154,12 +157,26 @@
                 btn.innerText = "BANNED";
                 status.innerText = "ACCESS REVOKED";
                 myPresenceRef.remove();
+            } else {
+                // If unbanned in real-time
+                isBanned = false;
+                btn.disabled = false;
+                if(audioUnlocked) {
+                    btn.innerText = "PING";
+                    status.innerText = "ONLINE";
+                } else {
+                    btn.innerText = "TAP ME";
+                    status.innerText = "Click once to enable sound!";
+                }
             }
         });
 
+        // 3. REAL-TIME ADMIN CONSOLE LOGIC
         function loadAdminData() {
+            // Watch Banned List
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
+                if (!snap.exists()) banList.innerHTML = "<div style='padding:10px; color:#475569; font-size:0.8rem;'>No bans.</div>";
                 snap.forEach((child) => {
                     const uid = child.key;
                     const item = document.createElement('div');
@@ -169,19 +186,23 @@
                 });
             });
 
+            // Watch Online List (Cross-referenced with Bans)
             onlineRef.on('value', (snap) => {
                 deviceList.innerHTML = "";
+                let count = 0;
                 snap.forEach((child) => {
                     const data = child.val();
                     const uid = data.uid;
                     if (!uid) return;
 
+                    // Only show in "Live" if they aren't already banned
                     blacklistRef.child(uid).once('value', (bSnap) => {
                         if (!bSnap.exists()) {
+                            count++;
                             const item = document.createElement('div');
                             item.className = 'list-item';
                             item.innerHTML = `
-                                <div><span style="color:#94a3b8">${data.device}</span><br><small>${uid}</small></div>
+                                <div><b style="color:#60a5fa">${data.device}</b> ${uid === myUID ? '<small>(You)</small>' : ''}<br><small>${uid}</small></div>
                                 <button class="ban-btn" onclick="manualBan('${uid}')">Ban ID</button>
                             `;
                             deviceList.appendChild(item);
@@ -192,12 +213,16 @@
         }
 
         window.manualBan = (uid) => {
-            if(confirm("Ban this specific device?")) blacklistRef.child(uid).set(true);
+            if(confirm("Ban this device immediately?")) blacklistRef.child(uid).set(true);
         };
-        window.unbanUser = (uid) => blacklistRef.child(uid).remove();
-        window.resetGlobalCounter = () => { if(confirm("Reset pings?")) counterRef.set(0); };
+        window.unbanUser = (uid) => {
+            if(confirm("Restore access for this device?")) blacklistRef.child(uid).remove();
+        };
+        window.resetGlobalCounter = () => { 
+            if(confirm("Reset global ping count to 0?")) counterRef.set(0); 
+        };
 
-        // 3. PRESENCE
+        // 4. PRESENCE SYSTEM
         const myPresenceRef = onlineRef.push();
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
@@ -212,7 +237,7 @@
 
         onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
 
-        // 4. PING LOGIC
+        // 5. PINGING LOGIC
         btn.addEventListener('click', () => {
             if (isBanned) return;
             if (!audioUnlocked) {
@@ -227,8 +252,12 @@
         });
 
         counterRef.on('value', s => countDisplay.innerText = (s.val() || 0).toLocaleString());
+        
         pingRef.on('value', () => {
-            if (audioUnlocked && !isBanned) { pingSound.currentTime = 0; pingSound.play(); }
+            if (audioUnlocked && !isBanned) { 
+                pingSound.currentTime = 0; 
+                pingSound.play().catch(()=>{}); 
+            }
             document.body.classList.add('flash');
             setTimeout(() => document.body.classList.remove('flash'), 100);
         });
