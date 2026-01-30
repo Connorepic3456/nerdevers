@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Admin Tracker</title>
+    <title>Global Ping - Admin Console</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
@@ -31,18 +31,16 @@
         /* Admin Panel Styles */
         #adminPanel { 
             display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
-            width: 95%; max-width: 600px; margin-top: 20px; border: 1px solid #334155;
+            width: 90%; max-width: 500px; margin-top: 20px; border: 1px solid #334155;
             text-align: left;
         }
         .admin-section { margin-bottom: 20px; }
         .list-item { 
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; 
-            background: #0f172a; padding: 10px 15px; margin: 5px 0; border-radius: 6px; font-size: 0.85rem;
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #0f172a; padding: 8px 12px; margin: 5px 0; border-radius: 6px; font-size: 0.85rem;
         }
         .unban-btn { background: #ef4444; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-        .device-info { color: #94a3b8; font-weight: bold; margin-right: 10px; }
-        .loc-info { color: #fbbf24; font-size: 0.8rem; }
-        .ip-info { color: #6366f1; font-family: monospace; }
+        .device-info { color: #94a3b8; font-style: italic; }
 
         .flash { background: #064e3b !important; }
     </style>
@@ -64,10 +62,10 @@
     </div>
 
     <div id="adminPanel">
-        <h2 style="margin:0 0 15px 0; color:#fbbf24; font-size: 1.2rem;">🛡️ Admin Tracker Console</h2>
+        <h2 style="margin:0 0 15px 0; color:#fbbf24; font-size: 1.2rem;">🛡️ Admin Console</h2>
         
         <div class="admin-section">
-            <strong style="color: #60a5fa;">📱 Live Devices & Locations:</strong>
+            <strong style="color: #60a5fa;">📱 Live Devices:</strong>
             <div id="deviceList"></div>
         </div>
 
@@ -82,7 +80,7 @@
 
     <script>
         // 1. SET YOUR IP HERE
-        const adminIPs = ['173.232.2.214']; 
+        const adminIPs = ['	162.120.185.203']; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyAxTgZNo7cVIoD2oO00q1Z2B6xj8x-nRCU",
@@ -115,84 +113,61 @@
         let userIP = "";
         let isBanned = false;
         let clickTimestamps = [];
-        let locationData = "Locating...";
 
+        // Helper to simplify Device Info
         function getDeviceInfo() {
             const ua = navigator.userAgent;
-            if (ua.includes("Win")) return "Windows";
-            if (ua.includes("Mac")) return "Mac";
+            if (ua.includes("Win")) return "Windows PC";
+            if (ua.includes("Mac")) return "MacBook/Mac";
             if (ua.includes("iPhone")) return "iPhone";
-            if (ua.includes("Android")) return "Android";
-            return "Other";
+            if (ua.includes("Android")) return "Android Phone";
+            return "Unknown Device";
         }
 
-        // 2. FETCH IP & LOCATION
-        fetch('http://ip-api.com/json/')
+        // 2. IP & Admin Check
+        fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(data => {
-                const rawIP = data.query;
+                const rawIP = data.ip;
                 userIP = rawIP.replace(/\./g, '_');
-                locationData = `${data.city}, ${data.countryCode}`;
 
                 if (adminIPs.includes(rawIP)) {
                     adminPanel.style.display = 'block';
                     loadAdminData();
                 }
 
-                // Setup Presence with Location
-                setupPresence(rawIP);
-
                 blacklistRef.child(userIP).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         isBanned = true;
                         btn.disabled = true;
                         btn.innerText = "BANNED";
-                        status.innerText = "ACCESS REVOKED";
+                        status.innerText = "ACCESS REVOKED FOR SPAM";
                     }
                 });
             });
 
-        function setupPresence(rawIP) {
-            const myPresenceRef = onlineRef.push();
-            db.ref('.info/connected').on('value', (snap) => {
-                if (snap.val() === true) {
-                    myPresenceRef.onDisconnect().remove();
-                    myPresenceRef.set({
-                        device: getDeviceInfo(),
-                        location: locationData,
-                        ip: rawIP,
-                        lastSeen: firebase.database.ServerValue.TIMESTAMP
-                    });
-                }
-            });
-        }
-
-        // 3. ADMIN DATA VIEW
+        // 3. Admin Tools: Load Blacklist & Live Devices
         function loadAdminData() {
+            // Watch Banned Users
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
                 snap.forEach((child) => {
                     const ipKey = child.key;
                     const item = document.createElement('div');
                     item.className = 'list-item';
-                    item.innerHTML = `<span class="ip-info">${ipKey.replace(/_/g, '.')}</span><button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>`;
+                    item.innerHTML = `<span>${ipKey.replace(/_/g, '.')}</span><button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>`;
                     banList.appendChild(item);
                 });
             });
 
+            // Watch Live Devices
             onlineRef.on('value', (snap) => {
                 deviceList.innerHTML = "";
                 snap.forEach((child) => {
                     const data = child.val();
                     const item = document.createElement('div');
                     item.className = 'list-item';
-                    item.innerHTML = `
-                        <div>
-                            <span class="device-info">${data.device}</span>
-                            <span class="ip-info">[${data.ip}]</span><br>
-                            <span class="loc-info">📍 ${data.location || 'Unknown'}</span>
-                        </div>
-                    `;
+                    item.innerHTML = `<span style="color:#22c55e">● Online</span> <span class="device-info">${data.device || 'Unknown'}</span>`;
                     deviceList.appendChild(item);
                 });
             });
@@ -202,13 +177,27 @@
             blacklistRef.child(ipKey).remove();
         };
 
-        // 4. PING LOGIC (Anti-Spam)
+        // 4. Online Presence (Saving Device Info)
+        const myPresenceRef = onlineRef.push();
+        db.ref('.info/connected').on('value', (snap) => {
+            if (snap.val() === true) {
+                myPresenceRef.onDisconnect().remove();
+                myPresenceRef.set({
+                    device: getDeviceInfo(),
+                    connectedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+        });
+        onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
+
+        // 5. Ping & Spam Logic
         btn.addEventListener('click', () => {
             if (isBanned) return;
             if (!audioUnlocked) {
                 pingSound.play().then(() => {
                     pingSound.pause(); pingSound.currentTime = 0;
-                    audioUnlocked = true; btn.classList.add('ready'); btn.innerText = "PING"; status.innerText = "ONLINE";
+                    audioUnlocked = true;
+                    btn.classList.add('ready'); btn.innerText = "PING"; status.innerText = "ONLINE";
                 });
             } else {
                 const now = Date.now();
@@ -223,7 +212,7 @@
             }
         });
 
-        onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
+        // 6. Global Listeners
         counterRef.on('value', (s) => countDisplay.innerText = (s.val() || 0).toLocaleString());
         pingRef.on('value', () => {
             if (audioUnlocked && !isBanned) {
