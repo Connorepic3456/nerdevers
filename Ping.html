@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Admin Console</title>
+    <title>Global Ping - Admin Edition</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
@@ -20,7 +20,8 @@
             box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); 
         }
         #pingBtn:active { transform: scale(0.9); }
-        #pingBtn:disabled { background: #1e293b !important; cursor: not-allowed; }
+        #pingBtn:disabled { background: #1e293b !important; cursor: not-allowed; opacity: 0.5; }
+        
         #status { margin-top: 20px; color: #94a3b8; font-weight: bold; }
         
         .stats-grid { display: flex; gap: 40px; margin-top: 30px; margin-bottom: 30px;}
@@ -32,7 +33,7 @@
         #adminPanel { 
             display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
             width: 90%; max-width: 500px; margin-top: 20px; border: 1px solid #334155;
-            text-align: left;
+            text-align: left; margin-bottom: 50px;
         }
         .admin-section { margin-bottom: 20px; }
         .list-item { 
@@ -79,8 +80,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // 1. SET YOUR IP HERE
-        const adminIPs = ['	162.120.185.203']; 
+        const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAxTgZNo7cVIoD2oO00q1Z2B6xj8x-nRCU",
@@ -99,8 +99,9 @@
         const counterRef = db.ref('ping_count');
         const blacklistRef = db.ref('blacklist');
         const onlineRef = db.ref('online_users');
+        const adminsRef = db.ref('admins');
 
-        const pingSound = new Audio('https://connorepic3456.github.io/nerdevers/ping.mp3');
+        const pingSound = new Audio(mySoundLink);
         const btn = document.getElementById('pingBtn');
         const status = document.getElementById('status');
         const countDisplay = document.getElementById('countNumber');
@@ -114,7 +115,6 @@
         let isBanned = false;
         let clickTimestamps = [];
 
-        // Helper to simplify Device Info
         function getDeviceInfo() {
             const ua = navigator.userAgent;
             if (ua.includes("Win")) return "Windows PC";
@@ -124,31 +124,40 @@
             return "Unknown Device";
         }
 
-        // 2. IP & Admin Check
+        // --- IP, ADMIN & BLACKLIST CHECK ---
         fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(data => {
                 const rawIP = data.ip;
                 userIP = rawIP.replace(/\./g, '_');
 
-                if (adminIPs.includes(rawIP)) {
-                    adminPanel.style.display = 'block';
-                    loadAdminData();
-                }
+                adminsRef.once('value', (snapshot) => {
+                    if (!snapshot.exists()) {
+                        adminsRef.child(userIP).set({
+                            addedAt: firebase.database.ServerValue.TIMESTAMP,
+                            role: "Master"
+                        });
+                        alert("First-time setup: You are now the Admin!");
+                        location.reload();
+                    } else if (snapshot.hasChild(userIP)) {
+                        adminPanel.style.display = 'block';
+                        loadAdminData();
+                    }
+                });
 
                 blacklistRef.child(userIP).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         isBanned = true;
                         btn.disabled = true;
                         btn.innerText = "BANNED";
+                        status.style.color = "#ef4444";
                         status.innerText = "ACCESS REVOKED FOR SPAM";
                     }
                 });
             });
 
-        // 3. Admin Tools: Load Blacklist & Live Devices
+        // --- ADMIN PANEL REFRESH ---
         function loadAdminData() {
-            // Watch Banned Users
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
                 snap.forEach((child) => {
@@ -160,7 +169,6 @@
                 });
             });
 
-            // Watch Live Devices
             onlineRef.on('value', (snap) => {
                 deviceList.innerHTML = "";
                 snap.forEach((child) => {
@@ -177,7 +185,7 @@
             blacklistRef.child(ipKey).remove();
         };
 
-        // 4. Online Presence (Saving Device Info)
+        // --- ONLINE PRESENCE ---
         const myPresenceRef = onlineRef.push();
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
@@ -190,7 +198,7 @@
         });
         onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
 
-        // 5. Ping & Spam Logic
+        // --- PING LOGIC ---
         btn.addEventListener('click', () => {
             if (isBanned) return;
             if (!audioUnlocked) {
@@ -212,7 +220,7 @@
             }
         });
 
-        // 6. Global Listeners
+        // --- GLOBAL SYNC ---
         counterRef.on('value', (s) => countDisplay.innerText = (s.val() || 0).toLocaleString());
         pingRef.on('value', () => {
             if (audioUnlocked && !isBanned) {
