@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Master Admin</title>
+    <title>Global Ping - Password Admin</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
@@ -29,6 +29,7 @@
         .stat-label { font-size: 0.8rem; color: #60a5fa; text-transform: uppercase; }
         .stat-value { font-size: 2rem; font-weight: 800; }
         
+        /* Admin Panel Styles */
         #adminPanel { 
             display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
             width: 95%; max-width: 550px; margin-top: 20px; border: 1px solid #334155;
@@ -44,8 +45,8 @@
         .reset-btn { background: #6366f1; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
         .ban-btn { background: #f97316; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
         .unban-btn { background: #ef4444; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
-        .device-info { color: #94a3b8; font-style: italic; }
-
+        
+        #adminLink { margin-top: 20px; color: #334155; cursor: pointer; font-size: 0.7rem; text-decoration: underline; }
         .flash { background: #064e3b !important; }
     </style>
 </head>
@@ -82,10 +83,14 @@
         </div>
     </div>
 
+    <div id="adminLink" onclick="promptAdmin()">Admin Login</div>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
+        // --- CONFIGURATION ---
+        const ADMIN_PASSWORD = "taco"; // CHANGE THIS!
         const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
 
         const firebaseConfig = {
@@ -105,7 +110,6 @@
         const counterRef = db.ref('ping_count');
         const blacklistRef = db.ref('blacklist');
         const onlineRef = db.ref('online_users');
-        const adminsRef = db.ref('admins');
 
         const pingSound = new Audio(mySoundLink);
         const btn = document.getElementById('pingBtn');
@@ -121,6 +125,25 @@
         let isBanned = false;
         let clickTimestamps = [];
 
+        // 1. Password Protection Logic
+        function promptAdmin() {
+            const pass = prompt("Enter Master Admin Password:");
+            if (pass === ADMIN_PASSWORD) {
+                adminPanel.style.display = 'block';
+                document.getElementById('adminLink').style.display = 'none';
+                loadAdminData();
+                localStorage.setItem('isAdmin', 'true');
+            } else {
+                alert("Incorrect password.");
+            }
+        }
+
+        // Auto-login if previously logged in
+        if (localStorage.getItem('isAdmin') === 'true') {
+            adminPanel.style.display = 'block';
+            document.getElementById('adminLink').style.display = 'none';
+        }
+
         function getDeviceInfo() {
             const ua = navigator.userAgent;
             if (ua.includes("Win")) return "Windows PC";
@@ -130,53 +153,27 @@
             return "Mobile Device";
         }
 
-        // Fetch IP and Setup Admin/Ban listeners
+        // Fetch IP for Banning logic
         fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(data => {
-                const rawIP = data.ip;
-                userIP = rawIP.replace(/\./g, '_');
+                userIP = data.ip.replace(/\./g, '_');
 
-                // Real-time Ban Monitor for current user
                 blacklistRef.child(userIP).on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         isBanned = true;
                         btn.disabled = true;
-                        btn.classList.remove('ready');
                         btn.innerText = "BANNED";
                         status.style.color = "#ef4444";
                         status.innerText = "ACCESS REVOKED BY ADMIN";
-                        myPresenceRef.remove(); // Remove them from online list immediately
-                    } else {
-                        isBanned = false;
-                        if(audioUnlocked) {
-                             btn.disabled = false;
-                             btn.classList.add('ready');
-                             btn.innerText = "PING";
-                             status.style.color = "#94a3b8";
-                             status.innerText = "ONLINE";
-                        }
+                        myPresenceRef.remove();
                     }
                 });
 
-                // Check Admin Status
-                adminsRef.once('value', (snapshot) => {
-                    if (!snapshot.exists()) {
-                        adminsRef.child(userIP).set({
-                            addedAt: firebase.database.ServerValue.TIMESTAMP,
-                            role: "Master"
-                        });
-                        alert("Setup Complete: You are now the Admin!");
-                        location.reload();
-                    } else if (snapshot.hasChild(userIP)) {
-                        adminPanel.style.display = 'block';
-                        loadAdminData();
-                    }
-                });
+                if (localStorage.getItem('isAdmin') === 'true') loadAdminData();
             });
 
         function loadAdminData() {
-            // Update Banned List
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
                 snap.forEach((child) => {
@@ -188,20 +185,20 @@
                 });
             });
 
-            // Update Live Online List
             onlineRef.on('value', (snap) => {
                 deviceList.innerHTML = "";
                 snap.forEach((child) => {
                     const data = child.val();
                     const ipKey = data.ipKey;
-
-                    // Only show in "Live" list if NOT already banned
+                    
                     blacklistRef.child(ipKey).once('value', (banSnap) => {
                         if (!banSnap.exists()) {
                             const item = document.createElement('div');
                             item.className = 'list-item';
-                            const actionHtml = (ipKey !== userIP) ? `<button class="ban-btn" onclick="manualBan('${ipKey}')">Ban IP</button>` : `<span style="color:#60a5fa; font-weight:bold;">(YOU)</span>`;
-                            item.innerHTML = `<div><span class="device-info">${data.device || 'Unknown'}</span><br><small style="color:#4b5563">${ipKey.replace(/_/g, '.')}</small></div><div class="action-btns">${actionHtml}</div>`;
+                            item.innerHTML = `
+                                <div><span style="color:#94a3b8">${data.device || 'User'}</span><br><small>${ipKey.replace(/_/g, '.')}</small></div>
+                                <button class="ban-btn" onclick="manualBan('${ipKey}')">Ban IP</button>
+                            `;
                             deviceList.appendChild(item);
                         }
                     });
@@ -209,69 +206,44 @@
             });
         }
 
-        window.manualBan = function(ipKey) {
-            if(confirm("Are you sure you want to ban this IP?")) {
-                blacklistRef.child(ipKey).set({ 
-                    bannedAt: firebase.database.ServerValue.TIMESTAMP, 
-                    reason: "Manual Admin Ban" 
-                });
-            }
+        window.manualBan = (ipKey) => {
+            if(confirm("Ban this IP?")) blacklistRef.child(ipKey).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP });
         };
 
-        window.unbanUser = function(ipKey) {
-            blacklistRef.child(ipKey).remove();
+        window.unbanUser = (ipKey) => blacklistRef.child(ipKey).remove();
+
+        window.resetGlobalCounter = () => {
+            if(confirm("Reset everything to 0?")) counterRef.set(0);
         };
 
-        window.resetGlobalCounter = function() {
-            if(confirm("WARNING: This will reset the global ping count to 0 for everyone. Continue?")) {
-                counterRef.set(0);
-            }
-        };
-
-        // Presence Logic
+        // Presence
         const myPresenceRef = onlineRef.push();
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
                 myPresenceRef.onDisconnect().remove();
-                if(!isBanned && userIP) {
-                    myPresenceRef.set({ device: getDeviceInfo(), ipKey: userIP, connectedAt: firebase.database.ServerValue.TIMESTAMP });
-                }
+                if(!isBanned) myPresenceRef.set({ device: getDeviceInfo(), ipKey: userIP });
             }
         });
 
         onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
 
-        // Interaction Logic
+        // Button Logic
         btn.addEventListener('click', () => {
             if (isBanned) return;
             if (!audioUnlocked) {
                 pingSound.play().then(() => {
-                    pingSound.pause(); pingSound.currentTime = 0;
                     audioUnlocked = true;
                     btn.classList.add('ready'); btn.innerText = "PING"; status.innerText = "ONLINE";
                 });
             } else {
-                const now = Date.now();
-                clickTimestamps.push(now);
-                if (clickTimestamps.length > 10) clickTimestamps.shift();
-                
-                // Auto-ban for spam (10 clicks in under 30 seconds)
-                if (clickTimestamps.length === 10 && (now - clickTimestamps[0]) < 30000) {
-                    blacklistRef.child(userIP).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP, reason: "Spam" });
-                    return;
-                }
-                
                 pingRef.set(firebase.database.ServerValue.TIMESTAMP);
                 counterRef.transaction((c) => (c || 0) + 1);
             }
         });
 
         counterRef.on('value', (s) => countDisplay.innerText = (s.val() || 0).toLocaleString());
-        
         pingRef.on('value', () => {
-            if (audioUnlocked && !isBanned) {
-                pingSound.currentTime = 0; pingSound.play().catch(() => {});
-            }
+            if (audioUnlocked && !isBanned) { pingSound.currentTime = 0; pingSound.play(); }
             document.body.classList.add('flash');
             setTimeout(() => document.body.classList.remove('flash'), 100);
         });
