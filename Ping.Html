@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping</title>
+    <title>Global Ping Counter</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
@@ -12,17 +12,20 @@
         }
         #pingBtn { 
             width: 200px; height: 200px; border-radius: 50%; border: none; 
-            background: #334155; /* Gray until unlocked */
-            color: white; font-size: 2.2rem; font-weight: bold; cursor: pointer; 
-            transition: 0.2s;
+            background: #334155; color: white; font-size: 2.2rem; font-weight: bold; cursor: pointer; 
+            transition: 0.2s; z-index: 10;
         }
-        /* This class makes the button glow when audio is ready */
         .ready { 
             background: linear-gradient(135deg, #22c55e, #16a34a) !important; 
             box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); 
         }
         #pingBtn:active { transform: scale(0.9); }
         #status { margin-top: 25px; color: #94a3b8; font-weight: bold; }
+        
+        /* Counter Styling */
+        #counterContainer { margin-top: 40px; font-size: 1.2rem; color: #60a5fa; }
+        #countNumber { font-size: 2.5rem; display: block; font-weight: 800; color: #fff; }
+        
         .flash { background: #064e3b !important; }
     </style>
 </head>
@@ -31,11 +34,15 @@
     <button id="pingBtn">TAP ME</button>
     <p id="status">Click the button to enable sound!</p>
 
+    <div id="counterContainer">
+        TOTAL PINGS
+        <span id="countNumber">0</span>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // --- CONFIG ---
         const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
 
         const firebaseConfig = {
@@ -50,15 +57,23 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const pingRef = firebase.database().ref('global_ping_event');
+        const db = firebase.database();
+        const pingRef = db.ref('global_ping_event');
+        const counterRef = db.ref('ping_count'); // New path for the counter
+        
         const pingSound = new Audio(mySoundLink);
         const btn = document.getElementById('pingBtn');
         const status = document.getElementById('status');
+        const countDisplay = document.getElementById('countNumber');
 
         let audioUnlocked = false;
 
-        // UNLOCK LOGIC: The first time you click the button, it unlocks audio.
-        // Every click AFTER that sends the ping to the world.
+        // Listen for Counter Updates
+        counterRef.on('value', (snapshot) => {
+            const val = snapshot.val() || 0;
+            countDisplay.innerText = val.toLocaleString();
+        });
+
         btn.addEventListener('click', () => {
             if (!audioUnlocked) {
                 pingSound.play().then(() => {
@@ -67,23 +82,24 @@
                     audioUnlocked = true;
                     btn.classList.add('ready');
                     btn.innerText = "PING";
-                    status.innerText = "ONLINE - Ready to Ping!";
-                }).catch(e => {
-                    status.innerText = "Error: Click again to allow sound.";
+                    status.innerText = "ONLINE";
                 });
             } else {
-                // Audio is already unlocked, so send the ping!
+                // 1. Trigger the sound/flash for everyone
                 pingRef.set(firebase.database.ServerValue.TIMESTAMP);
+                
+                // 2. Increment the global counter safely
+                counterRef.transaction((currentCount) => {
+                    return (currentCount || 0) + 1;
+                });
             }
         });
 
-        // LISTEN FOR PINGS
         pingRef.on('value', (snapshot) => {
             if (audioUnlocked) {
                 pingSound.currentTime = 0;
                 pingSound.play();
             }
-            // Flash effect
             document.body.classList.add('flash');
             setTimeout(() => document.body.classList.remove('flash'), 100);
         });
