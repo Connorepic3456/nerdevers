@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Ping</title>
+    <style>
+        body { 
+            background: #0f172a; 
+            color: white; 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            transition: background 0.1s;
+        }
+        #pingBtn { 
+            width: 200px; 
+            height: 200px; 
+            border-radius: 50%; 
+            border: none; 
+            background: #ef4444; 
+            color: white; 
+            font-size: 2.5rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); 
+            transition: transform 0.1s;
+        }
+        #pingBtn:active { transform: scale(0.9); }
+        #status { margin-top: 20px; color: #94a3b8; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <button id="pingBtn">PING</button>
+    <p id="status">Tap the button to alert everyone!</p>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Your specific config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxTgZNo7cVIoD2oO00q1Z2B6xj8x-nRCU",
+            authDomain: "nerds-79270.firebaseapp.com",
+            databaseURL: "https://nerds-79270-default-rtdb.firebaseio.com",
+            projectId: "nerds-79270",
+            storageBucket: "nerds-79270.firebasestorage.app",
+            messagingSenderId: "153367226684",
+            appId: "1:153367226684:web:c58421737c993346dfd639",
+            measurementId: "G-DQY92GJFZP"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const pingRef = db.ref('global_ping_event');
+        
+        const pingBtn = document.getElementById('pingBtn');
+        const statusText = document.getElementById('status');
+        
+        // A standard notification sound
+        const pingSound = new Audio('https://www.soundjay.com/buttons/sounds/button-37.mp3');
+
+        // 1. Send the Ping
+        pingBtn.addEventListener('click', () => {
+            pingRef.set(firebase.database.ServerValue.TIMESTAMP);
+        });
+
+        // 2. Hear the Ping (for everyone)
+        pingRef.on('value', (snapshot) => {
+            // Browsers block sound until you click the page once
+            pingSound.play().catch(() => {
+                statusText.innerText = "🔊 Tap once to enable audio!";
+            });
+
+            // Flash effect
+            document.body.style.background = "#450a0a";
+            setTimeout(() => { document.body.style.background = "#0f172a"; }, 100);
+        });
+    </script>
+</body>
+</html>
