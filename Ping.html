@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Admin Edition</title>
+    <title>Global Ping - Master Admin</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
@@ -29,18 +29,19 @@
         .stat-label { font-size: 0.8rem; color: #60a5fa; text-transform: uppercase; }
         .stat-value { font-size: 2rem; font-weight: 800; }
         
-        /* Admin Panel Styles */
         #adminPanel { 
             display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
-            width: 90%; max-width: 500px; margin-top: 20px; border: 1px solid #334155;
+            width: 95%; max-width: 550px; margin-top: 20px; border: 1px solid #334155;
             text-align: left; margin-bottom: 50px;
         }
-        .admin-section { margin-bottom: 20px; }
+        .admin-section { margin-bottom: 25px; }
         .list-item { 
             display: flex; justify-content: space-between; align-items: center; 
-            background: #0f172a; padding: 8px 12px; margin: 5px 0; border-radius: 6px; font-size: 0.85rem;
+            background: #0f172a; padding: 10px 14px; margin: 6px 0; border-radius: 8px; font-size: 0.85rem;
         }
-        .unban-btn { background: #ef4444; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+        .action-btns { display: flex; gap: 8px; }
+        .ban-btn { background: #f97316; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .unban-btn { background: #ef4444; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
         .device-info { color: #94a3b8; font-style: italic; }
 
         .flash { background: #064e3b !important; }
@@ -63,15 +64,15 @@
     </div>
 
     <div id="adminPanel">
-        <h2 style="margin:0 0 15px 0; color:#fbbf24; font-size: 1.2rem;">🛡️ Admin Console</h2>
+        <h2 style="margin:0 0 15px 0; color:#fbbf24; font-size: 1.2rem;">🛡️ Master Admin Console</h2>
         
         <div class="admin-section">
-            <strong style="color: #60a5fa;">📱 Live Devices:</strong>
+            <strong style="color: #60a5fa;">📱 Live Devices (Kick/Ban):</strong>
             <div id="deviceList"></div>
         </div>
 
         <div class="admin-section">
-            <strong style="color: #ef4444;">🚫 Banned IPs:</strong>
+            <strong style="color: #ef4444;">🚫 Banned Database:</strong>
             <div id="banList"></div>
         </div>
     </div>
@@ -121,7 +122,7 @@
             if (ua.includes("Mac")) return "MacBook/Mac";
             if (ua.includes("iPhone")) return "iPhone";
             if (ua.includes("Android")) return "Android Phone";
-            return "Unknown Device";
+            return "Mobile Device";
         }
 
         // --- IP, ADMIN & BLACKLIST CHECK ---
@@ -137,7 +138,7 @@
                             addedAt: firebase.database.ServerValue.TIMESTAMP,
                             role: "Master"
                         });
-                        alert("First-time setup: You are now the Admin!");
+                        alert("Setup Complete: You are now the Admin!");
                         location.reload();
                     } else if (snapshot.hasChild(userIP)) {
                         adminPanel.style.display = 'block';
@@ -151,35 +152,62 @@
                         btn.disabled = true;
                         btn.innerText = "BANNED";
                         status.style.color = "#ef4444";
-                        status.innerText = "ACCESS REVOKED FOR SPAM";
+                        status.innerText = "ACCESS REVOKED BY ADMIN";
                     }
                 });
             });
 
-        // --- ADMIN PANEL REFRESH ---
+        // --- ADMIN PANEL FUNCTIONS ---
         function loadAdminData() {
+            // Watch Banned List
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
                 snap.forEach((child) => {
                     const ipKey = child.key;
                     const item = document.createElement('div');
                     item.className = 'list-item';
-                    item.innerHTML = `<span>${ipKey.replace(/_/g, '.')}</span><button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>`;
+                    item.innerHTML = `
+                        <span>${ipKey.replace(/_/g, '.')}</span>
+                        <button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>
+                    `;
                     banList.appendChild(item);
                 });
             });
 
+            // Watch Online List
             onlineRef.on('value', (snap) => {
                 deviceList.innerHTML = "";
                 snap.forEach((child) => {
                     const data = child.val();
+                    const ipKey = data.ipKey;
                     const item = document.createElement('div');
                     item.className = 'list-item';
-                    item.innerHTML = `<span style="color:#22c55e">● Online</span> <span class="device-info">${data.device || 'Unknown'}</span>`;
+                    
+                    // Don't show a "Ban" button for yourself
+                    const actionHtml = (ipKey !== userIP) 
+                        ? `<button class="ban-btn" onclick="manualBan('${ipKey}')">Ban IP</button>` 
+                        : `<span style="color:#60a5fa; font-weight:bold;">(YOU)</span>`;
+
+                    item.innerHTML = `
+                        <div>
+                            <span class="device-info">${data.device || 'Unknown'}</span>
+                            <br><small style="color:#4b5563">${ipKey.replace(/_/g, '.')}</small>
+                        </div>
+                        <div class="action-btns">${actionHtml}</div>
+                    `;
                     deviceList.appendChild(item);
                 });
             });
         }
+
+        window.manualBan = function(ipKey) {
+            if(confirm("Are you sure you want to ban this IP?")) {
+                blacklistRef.child(ipKey).set({
+                    bannedAt: firebase.database.ServerValue.TIMESTAMP,
+                    reason: "Manual Admin Ban"
+                });
+            }
+        };
 
         window.unbanUser = function(ipKey) {
             blacklistRef.child(ipKey).remove();
@@ -192,6 +220,7 @@
                 myPresenceRef.onDisconnect().remove();
                 myPresenceRef.set({
                     device: getDeviceInfo(),
+                    ipKey: userIP, // Store IP so admin can ban from list
                     connectedAt: firebase.database.ServerValue.TIMESTAMP
                 });
             }
@@ -212,7 +241,7 @@
                 clickTimestamps.push(now);
                 if (clickTimestamps.length > 10) clickTimestamps.shift();
                 if (clickTimestamps.length === 10 && (now - clickTimestamps[0]) < 30000) {
-                    blacklistRef.child(userIP).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP });
+                    blacklistRef.child(userIP).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP, reason: "Spam" });
                     return;
                 }
                 pingRef.set(firebase.database.ServerValue.TIMESTAMP);
