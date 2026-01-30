@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping - Password Admin</title>
+    <title>Global Ping - Unique ID Admin</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
@@ -29,7 +29,6 @@
         .stat-label { font-size: 0.8rem; color: #60a5fa; text-transform: uppercase; }
         .stat-value { font-size: 2rem; font-weight: 800; }
         
-        /* Admin Panel Styles */
         #adminPanel { 
             display: none; background: #1e293b; padding: 20px; border-radius: 12px; 
             width: 95%; max-width: 550px; margin-top: 20px; border: 1px solid #334155;
@@ -73,7 +72,7 @@
         </div>
         
         <div class="admin-section">
-            <strong style="color: #60a5fa;">📱 Live Devices (Ban IP):</strong>
+            <strong style="color: #60a5fa;">📱 Live Devices (Unique ID):</strong>
             <div id="deviceList"></div>
         </div>
 
@@ -89,8 +88,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // --- CONFIGURATION ---
-        const ADMIN_PASSWORD = "taco"; // CHANGE THIS!
+        // --- CONFIG ---
+        const ADMIN_PASSWORD = "taco"; 
         const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
 
         const firebaseConfig = {
@@ -121,66 +120,51 @@
         const deviceList = document.getElementById('deviceList');
 
         let audioUnlocked = false;
-        let userIP = "";
         let isBanned = false;
-        let clickTimestamps = [];
 
-        // 1. Password Protection Logic
+        // 1. UNIQUE DEVICE ID LOGIC
+        // This generates a random ID for each laptop so they aren't the same
+        let myUID = localStorage.getItem('userUID');
+        if (!myUID) {
+            myUID = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('userUID', myUID);
+        }
+
         function promptAdmin() {
             const pass = prompt("Enter Master Admin Password:");
             if (pass === ADMIN_PASSWORD) {
                 adminPanel.style.display = 'block';
                 document.getElementById('adminLink').style.display = 'none';
-                loadAdminData();
                 localStorage.setItem('isAdmin', 'true');
-            } else {
-                alert("Incorrect password.");
-            }
+                loadAdminData();
+            } else { alert("Wrong password."); }
         }
 
-        // Auto-login if previously logged in
         if (localStorage.getItem('isAdmin') === 'true') {
             adminPanel.style.display = 'block';
             document.getElementById('adminLink').style.display = 'none';
+            loadAdminData();
         }
 
-        function getDeviceInfo() {
-            const ua = navigator.userAgent;
-            if (ua.includes("Win")) return "Windows PC";
-            if (ua.includes("Mac")) return "MacBook/Mac";
-            if (ua.includes("iPhone")) return "iPhone";
-            if (ua.includes("Android")) return "Android Phone";
-            return "Mobile Device";
-        }
-
-        // Fetch IP for Banning logic
-        fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-                userIP = data.ip.replace(/\./g, '_');
-
-                blacklistRef.child(userIP).on('value', (snapshot) => {
-                    if (snapshot.exists()) {
-                        isBanned = true;
-                        btn.disabled = true;
-                        btn.innerText = "BANNED";
-                        status.style.color = "#ef4444";
-                        status.innerText = "ACCESS REVOKED BY ADMIN";
-                        myPresenceRef.remove();
-                    }
-                });
-
-                if (localStorage.getItem('isAdmin') === 'true') loadAdminData();
-            });
+        // 2. BAN LISTENER (Using UID instead of IP)
+        blacklistRef.child(myUID).on('value', (snap) => {
+            if (snap.exists()) {
+                isBanned = true;
+                btn.disabled = true;
+                btn.innerText = "BANNED";
+                status.innerText = "ACCESS REVOKED";
+                myPresenceRef.remove();
+            }
+        });
 
         function loadAdminData() {
             blacklistRef.on('value', (snap) => {
                 banList.innerHTML = "";
                 snap.forEach((child) => {
-                    const ipKey = child.key;
+                    const uid = child.key;
                     const item = document.createElement('div');
                     item.className = 'list-item';
-                    item.innerHTML = `<span>${ipKey.replace(/_/g, '.')}</span><button class="unban-btn" onclick="unbanUser('${ipKey}')">Unban</button>`;
+                    item.innerHTML = `<span>${uid}</span><button class="unban-btn" onclick="unbanUser('${uid}')">Unban</button>`;
                     banList.appendChild(item);
                 });
             });
@@ -189,15 +173,16 @@
                 deviceList.innerHTML = "";
                 snap.forEach((child) => {
                     const data = child.val();
-                    const ipKey = data.ipKey;
-                    
-                    blacklistRef.child(ipKey).once('value', (banSnap) => {
-                        if (!banSnap.exists()) {
+                    const uid = data.uid;
+                    if (!uid) return;
+
+                    blacklistRef.child(uid).once('value', (bSnap) => {
+                        if (!bSnap.exists()) {
                             const item = document.createElement('div');
                             item.className = 'list-item';
                             item.innerHTML = `
-                                <div><span style="color:#94a3b8">${data.device || 'User'}</span><br><small>${ipKey.replace(/_/g, '.')}</small></div>
-                                <button class="ban-btn" onclick="manualBan('${ipKey}')">Ban IP</button>
+                                <div><span style="color:#94a3b8">${data.device}</span><br><small>${uid}</small></div>
+                                <button class="ban-btn" onclick="manualBan('${uid}')">Ban ID</button>
                             `;
                             deviceList.appendChild(item);
                         }
@@ -206,28 +191,28 @@
             });
         }
 
-        window.manualBan = (ipKey) => {
-            if(confirm("Ban this IP?")) blacklistRef.child(ipKey).set({ bannedAt: firebase.database.ServerValue.TIMESTAMP });
+        window.manualBan = (uid) => {
+            if(confirm("Ban this specific device?")) blacklistRef.child(uid).set(true);
         };
+        window.unbanUser = (uid) => blacklistRef.child(uid).remove();
+        window.resetGlobalCounter = () => { if(confirm("Reset pings?")) counterRef.set(0); };
 
-        window.unbanUser = (ipKey) => blacklistRef.child(ipKey).remove();
-
-        window.resetGlobalCounter = () => {
-            if(confirm("Reset everything to 0?")) counterRef.set(0);
-        };
-
-        // Presence
+        // 3. PRESENCE
         const myPresenceRef = onlineRef.push();
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
                 myPresenceRef.onDisconnect().remove();
-                if(!isBanned) myPresenceRef.set({ device: getDeviceInfo(), ipKey: userIP });
+                if (!isBanned) {
+                    const ua = navigator.userAgent;
+                    const dev = ua.includes("Win") ? "Windows" : ua.includes("Mac") ? "Mac" : ua.includes("Android") ? "Android" : "iPhone";
+                    myPresenceRef.set({ device: dev, uid: myUID });
+                }
             }
         });
 
         onlineRef.on('value', (snap) => onlineDisplay.innerText = snap.numChildren());
 
-        // Button Logic
+        // 4. PING LOGIC
         btn.addEventListener('click', () => {
             if (isBanned) return;
             if (!audioUnlocked) {
@@ -237,11 +222,11 @@
                 });
             } else {
                 pingRef.set(firebase.database.ServerValue.TIMESTAMP);
-                counterRef.transaction((c) => (c || 0) + 1);
+                counterRef.transaction(c => (c || 0) + 1);
             }
         });
 
-        counterRef.on('value', (s) => countDisplay.innerText = (s.val() || 0).toLocaleString());
+        counterRef.on('value', s => countDisplay.innerText = (s.val() || 0).toLocaleString());
         pingRef.on('value', () => {
             if (audioUnlocked && !isBanned) { pingSound.currentTime = 0; pingSound.play(); }
             document.body.classList.add('flash');
