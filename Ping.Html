@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Ping Counter</title>
+    <title>Global Ping - Anti-Spam Edition</title>
     <style>
         body { 
             background: #0f172a; color: white; font-family: system-ui, sans-serif; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; transition: background 0.1s ease;
+            height: 100vh; margin: 0; transition: background 0.1s ease; text-align: center;
         }
         #pingBtn { 
             width: 200px; height: 200px; border-radius: 50%; border: none; 
@@ -20,19 +20,17 @@
             box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); 
         }
         #pingBtn:active { transform: scale(0.9); }
-        #status { margin-top: 25px; color: #94a3b8; font-weight: bold; }
-        
-        /* Counter Styling */
+        #pingBtn:disabled { background: #1e293b !important; cursor: not-allowed; box-shadow: none; }
+        #status { margin-top: 25px; color: #94a3b8; font-weight: bold; padding: 0 20px; }
         #counterContainer { margin-top: 40px; font-size: 1.2rem; color: #60a5fa; }
         #countNumber { font-size: 2.5rem; display: block; font-weight: 800; color: #fff; }
-        
         .flash { background: #064e3b !important; }
     </style>
 </head>
 <body>
 
     <button id="pingBtn">TAP ME</button>
-    <p id="status">Click the button to enable sound!</p>
+    <p id="status">Click once to enable sound!</p>
 
     <div id="counterContainer">
         TOTAL PINGS
@@ -43,6 +41,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
+        // --- CONFIG ---
         const mySoundLink = 'https://connorepic3456.github.io/nerdevers/ping.mp3';
 
         const firebaseConfig = {
@@ -56,25 +55,50 @@
             measurementId: "G-DQY92GJFZP"
         };
 
+        // Initialize
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const pingRef = db.ref('global_ping_event');
-        const counterRef = db.ref('ping_count'); // New path for the counter
-        
+        const counterRef = db.ref('ping_count');
+        const blacklistRef = db.ref('blacklist');
+
         const pingSound = new Audio(mySoundLink);
         const btn = document.getElementById('pingBtn');
         const status = document.getElementById('status');
         const countDisplay = document.getElementById('countNumber');
 
         let audioUnlocked = false;
+        let userIP = "";
+        let isBanned = false;
+        let clickTimestamps = [];
 
-        // Listen for Counter Updates
+        // 1. Check IP and Blacklist Status
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+                userIP = data.ip.replace(/\./g, '_'); // Replace dots for Firebase
+                
+                blacklistRef.child(userIP).on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        isBanned = true;
+                        btn.disabled = true;
+                        btn.innerText = "BANNED";
+                        status.innerHTML = "🚫 Access Revoked.<br>Reason: Extreme Spamming";
+                        status.style.color = "#ef4444";
+                    }
+                });
+            });
+
+        // 2. Counter Listener
         counterRef.on('value', (snapshot) => {
-            const val = snapshot.val() || 0;
-            countDisplay.innerText = val.toLocaleString();
+            countDisplay.innerText = (snapshot.val() || 0).toLocaleString();
         });
 
+        // 3. Ping/Click Logic
         btn.addEventListener('click', () => {
+            if (isBanned) return;
+
+            // First click unlocks audio
             if (!audioUnlocked) {
                 pingSound.play().then(() => {
                     pingSound.pause();
@@ -85,20 +109,30 @@
                     status.innerText = "ONLINE";
                 });
             } else {
-                // 1. Trigger the sound/flash for everyone
+                // Check for spam (10 clicks in 30 seconds)
+                const now = Date.now();
+                clickTimestamps.push(now);
+                if (clickTimestamps.length > 10) clickTimestamps.shift();
+
+                if (clickTimestamps.length === 10 && (now - clickTimestamps[0]) < 30000) {
+                    blacklistRef.child(userIP).set({
+                        bannedAt: firebase.database.ServerValue.TIMESTAMP,
+                        reason: "Exceeded 10 pings per 30s"
+                    });
+                    return;
+                }
+
+                // If safe, send ping
                 pingRef.set(firebase.database.ServerValue.TIMESTAMP);
-                
-                // 2. Increment the global counter safely
-                counterRef.transaction((currentCount) => {
-                    return (currentCount || 0) + 1;
-                });
+                counterRef.transaction((count) => (count || 0) + 1);
             }
         });
 
+        // 4. Listen for Global Pings
         pingRef.on('value', (snapshot) => {
-            if (audioUnlocked) {
+            if (audioUnlocked && !isBanned) {
                 pingSound.currentTime = 0;
-                pingSound.play();
+                pingSound.play().catch(e => console.log("Audio waiting..."));
             }
             document.body.classList.add('flash');
             setTimeout(() => document.body.classList.remove('flash'), 100);
