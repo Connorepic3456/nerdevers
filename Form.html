@@ -65,61 +65,69 @@
 </form>
 
 <script>
-  function togglePrinter(show) {
-    document.getElementById('printer_details').style.display = show ? 'block' : 'none';
-  }
+function togglePrinter(show) {
+  const printerDiv = document.getElementById('printer_details');
+  const brandSelect = document.getElementById('brand');
+  const modelSelect = document.getElementById('model');
 
-  const printerData = {
-    "Bambu": ["X1-Carbon", "X1E", "P1S", "P1P", "A1", "A1 Mini", "H2D", "P1S"],
-    "Creality": ["Ender 3 V3", "Ender 3 V2", "K1 Max", "K1 SE", "CR-10", "Halot-Mage"],
-    "Prusa": ["MK4S", "MK3S+", "MINI+", "Prusa XL", "SL1S"],
-    "Elegoo": ["Neptune 4 Pro", "Mars 5", "Saturn 4 Ultra", "Jupiter SE"],
-    "Qidi": ["X-Max 3", "X-Plus 3", "X-Smart 3", "X-Plus 2"],
-    "Sovol": ["SV06 Plus", "SV07 Plus", "SV08", "SV04 IDEX"],
-    "Anycubic": ["Kobra 2 Max", "Kobra 3", "Photon Mono M7 Pro", "Photon Mono 2"],
-    "Snapmaker": ["Artisan", "J1s IDEX", "Snapmaker 2.0 A350", "Snapmaker Ray"],
-    "Flashforge": ["Adventurer 5M Pro", "Adventurer 4 Pro", "Creator Pro 2", "Guider 3 Ultra"]
-  };
+  // Show or hide the section
+  printerDiv.style.display = show ? 'block' : 'none';
 
-  function updateModels() {
-    const brand = document.getElementById('brand').value;
-    const modelSelect = document.getElementById('model');
-    modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+  // Enable or disable the 'required' rule based on visibility
+  brandSelect.required = show;
+  modelSelect.required = show;
+}
 
-    if (printerData[brand]) {
-      printerData[brand].forEach(m => {
-        let opt = document.createElement('option');
-        opt.value = m;
-        opt.innerHTML = m;
-        modelSelect.appendChild(opt);
-      });
-    }
-  }
+const printerData = {
+  "Bambu": ["X1-Carbon", "X1E", "P1S", "P1P", "A1", "A1 Mini", "H2D"],
+  "Creality": ["Ender 3 V3", "Ender 3 V2", "K1 Max", "K1 SE", "CR-10", "Halot-Mage"],
+  "Prusa": ["MK4S", "MK3S+", "MINI+", "Prusa XL", "SL1S"],
+  "Elegoo": ["Neptune 4 Pro", "Mars 5", "Saturn 4 Ultra", "Jupiter SE"],
+  "Qidi": ["X-Max 3", "X-Plus 3", "X-Smart 3", "X-Plus 2"],
+  "Sovol": ["SV06 Plus", "SV07 Plus", "SV08", "SV04 IDEX"],
+  "Anycubic": ["Kobra 2 Max", "Kobra 3", "Photon Mono M7 Pro", "Photon Mono 2"],
+  "Snapmaker": ["Artisan", "J1s IDEX", "Snapmaker 2.0 A350", "Snapmaker Ray"],
+  "Flashforge": ["Adventurer 5M Pro", "Adventurer 4 Pro", "Creator Pro 2", "Guider 3 Ultra"]
+};
 
-  const form = document.getElementById('survey-form');
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+function updateModels() {
+  const brand = document.getElementById('brand').value;
+  const modelSelect = document.getElementById('model');
+  modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
 
-    // Using your specific Stein URL
-    fetch("https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/sheet1", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify([data])
-    })
-    .then(response => response.json())
-    .then(result => {
-      alert("Form submitted successfully!");
-      form.reset();
-      togglePrinter(false);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert("There was an error saving your data.");
+  if (printerData[brand]) {
+    printerData[brand].forEach(m => {
+      let opt = document.createElement('option');
+      opt.value = m;
+      opt.innerHTML = m;
+      modelSelect.appendChild(opt);
     });
+  }
+}
+
+const form = document.getElementById('survey-form');
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+
+  fetch("https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/sheet1", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify([data])
+  })
+  .then(response => response.json())
+  .then(result => {
+    alert("Form submitted successfully!");
+    form.reset();
+    togglePrinter(false); // Hide the printer section again after reset
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert("There was an error saving your data.");
   });
+});
 </script>
