@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>3D Printing Survey Dashboard</title>
+    <title>3D Printing Survey Dashboard (Auto-Update)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
@@ -10,15 +10,16 @@
         .chart-box { background: white; padding: 20px; border-radius: 8px; width: 450px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2, h3 { text-align: center; }
         #printer-charts-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; width: 100%; }
+        #status { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <h2>Survey Results Dashboard</h2>
+    <div id="status">Last updated: Never</div>
     
     <div class="container">
         <div id="printer-charts-container"></div>
-
         <div class="chart-box">
             <h3>Gender Distribution</h3>
             <canvas id="genderChart"></canvas>
@@ -31,22 +32,28 @@
 
     <script>
         const steinUrl = "https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/Sheet1";
+        let chartInstances = {}; // Store charts here so we can destroy them before updating
 
         async function fetchData() {
             try {
                 const response = await fetch(steinUrl);
                 const data = await response.json();
-                if (data.length > 0) renderCharts(data);
+                if (data.length > 0) {
+                    renderCharts(data);
+                    document.getElementById('status').innerText = "Last updated: " + new Date().toLocaleTimeString();
+                }
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Error fetching data:", error);
             }
         }
 
         function renderCharts(data) {
-            const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))];
             const printerContainer = document.getElementById('printer-charts-container');
+            const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))];
 
-            // Create a separate chart for each brand
+            // Clear the printer container for a fresh draw if brands changed
+            printerContainer.innerHTML = '';
+
             brands.forEach(brand => {
                 const brandData = data.filter(d => d.printer_brand === brand);
                 const modelCounts = {};
@@ -56,15 +63,16 @@
                     }
                 });
 
+                const canvasId = `chart-${brand.replace(/\s+/g, '')}`;
                 const chartBox = document.createElement('div');
                 chartBox.className = 'chart-box';
-                chartBox.innerHTML = `<h3>${brand} Models</h3><canvas id="chart-${brand.replace(/\s+/g, '')}"></canvas>`;
+                chartBox.innerHTML = `<h3>${brand} Models</h3><canvas id="${canvasId}"></canvas>`;
                 printerContainer.appendChild(chartBox);
 
-                renderEnhancedChart(`chart-${brand.replace(/\s+/g, '')}`, 'bar', modelCounts, '#36A2EB');
+                renderEnhancedChart(canvasId, 'bar', modelCounts, '#36A2EB');
             });
 
-            // Render Gender and Browser charts
+            // Render static charts
             const genderCounts = {};
             data.forEach(d => { if(d.gender) genderCounts[d.gender] = (genderCounts[d.gender] || 0) + 1; });
             renderEnhancedChart('genderChart', 'pie', genderCounts, ['#36A2EB', '#FF6384', '#FFCE56']);
@@ -75,11 +83,17 @@
         }
 
         function renderEnhancedChart(id, type, countMap, colors) {
+            // Destroy existing chart instance if it exists to prevent overlap
+            if (chartInstances[id]) {
+                chartInstances[id].destroy();
+            }
+
             const labels = Object.keys(countMap);
             const values = Object.values(countMap);
             const total = values.reduce((a, b) => a + b, 0);
 
-            new Chart(document.getElementById(id), {
+            const ctx = document.getElementById(id).getContext('2d');
+            chartInstances[id] = new Chart(ctx, {
                 type: type,
                 data: {
                     labels: labels,
@@ -90,6 +104,7 @@
                 },
                 options: {
                     responsive: true,
+                    animation: false, // Turn off animation for smoother background updates
                     plugins: {
                         tooltip: {
                             callbacks: {
@@ -106,7 +121,11 @@
             });
         }
 
+        // Initial fetch
         fetchData();
+
+        // Update every 30 seconds (30000 milliseconds)
+        setInterval(fetchData, 30000);
     </script>
 </body>
 </html>
