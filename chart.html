@@ -2,31 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Printing Survey Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-        .chart-box { background: white; padding: 20px; border-radius: 8px; width: 450px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .stat-card { background: #36A2EB; color: white; padding: 15px; border-radius: 8px; text-align: center; width: 200px; margin: 0 auto 20px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        h2, h3 { text-align: center; }
-        #printer-charts-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; width: 100%; }
-        #status { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        /* Ensures padding doesn't break the layout width */
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background: #f4f4f4; 
+            margin: 0;
+        }
+
+        h2 { text-align: center; margin-bottom: 10px; }
+
+        /* Status and Count Header */
+        .header-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-card { 
+            background: #36A2EB; 
+            color: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            display: inline-block;
+            min-width: 200px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            margin-bottom: 10px;
+        }
+
+        #status { color: #666; font-size: 0.85em; }
+
+        /* The main flexible container */
+        .container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            justify-content: center; 
+            max-width: 1400px; 
+            margin: 0 auto; 
+        }
+
+        /* Each chart box fits 2 per row on large screens */
+        .chart-box { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            flex: 1 1 calc(50% - 20px); /* Grow, shrink, and base width */
+            min-width: 320px; /* Ensures they don't get too skinny */
+            max-width: 650px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+
+        canvas { width: 100% !important; height: auto !important; }
+
+        /* Mobile adjustment */
+        @media (max-width: 768px) {
+            .chart-box { flex: 1 1 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <h2>Survey Results Dashboard</h2>
-    
-    <div class="stat-card">
-        <div style="font-size: 0.9em; text-transform: uppercase;">Total Submissions</div>
-        <div id="submissionCount" style="font-size: 2em; font-weight: bold;">0</div>
+    <div class="header-info">
+        <h2>Survey Results Dashboard</h2>
+        <div class="stat-card">
+            <div style="font-size: 0.8em; text-transform: uppercase; opacity: 0.9;">Total Submissions</div>
+            <div id="submissionCount" style="font-size: 2em; font-weight: bold;">0</div>
+        </div>
+        <div id="status">Last updated: Never</div>
     </div>
-
-    <div id="status">Last updated: Never</div>
     
-    <div class="container">
-        <div id="printer-charts-container"></div>
+    <div class="container" id="main-container">
         <div class="chart-box">
             <h3>Gender Distribution</h3>
             <canvas id="genderChart"></canvas>
@@ -45,7 +96,7 @@
             try {
                 const response = await fetch(steinUrl);
                 const data = await response.json();
-                if (data.length >= 0) {
+                if (data && Array.isArray(data)) {
                     document.getElementById('submissionCount').innerText = data.length;
                     renderCharts(data);
                     document.getElementById('status').innerText = "Last updated: " + new Date().toLocaleTimeString();
@@ -56,10 +107,11 @@
         }
 
         function renderCharts(data) {
-            const printerContainer = document.getElementById('printer-charts-container');
+            const container = document.getElementById('main-container');
             const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))];
 
-            printerContainer.innerHTML = '';
+            // Remove existing dynamic brand boxes to refresh the list
+            document.querySelectorAll('.brand-box').forEach(el => el.remove());
 
             brands.forEach(brand => {
                 const brandData = data.filter(d => d.printer_brand === brand);
@@ -70,15 +122,18 @@
                     }
                 });
 
-                const canvasId = `chart-${brand.replace(/\s+/g, '')}`;
+                const canvasId = `chart-${brand.replace(/[^a-z0-9]/gi, '')}`;
                 const chartBox = document.createElement('div');
-                chartBox.className = 'chart-box';
+                chartBox.className = 'chart-box brand-box';
                 chartBox.innerHTML = `<h3>${brand} Models</h3><canvas id="${canvasId}"></canvas>`;
-                printerContainer.appendChild(chartBox);
+                
+                // Add brand charts to the start of the container
+                container.prepend(chartBox);
 
                 renderEnhancedChart(canvasId, 'bar', modelCounts, '#36A2EB');
             });
 
+            // Render static charts
             const genderCounts = {};
             data.forEach(d => { if(d.gender) genderCounts[d.gender] = (genderCounts[d.gender] || 0) + 1; });
             renderEnhancedChart('genderChart', 'pie', genderCounts, ['#36A2EB', '#FF6384', '#FFCE56']);
@@ -112,8 +167,10 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     animation: false,
                     plugins: {
+                        legend: { position: 'bottom' },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -130,7 +187,7 @@
         }
 
         fetchData();
-        setInterval(fetchData, 30000);
+        setInterval(fetchData, 30000); // 30 second auto-refresh
     </script>
 </body>
 </html>
