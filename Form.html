@@ -1,133 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Printing Survey</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        #survey-form {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+        p {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #444;
+        }
+        .question-group {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .question-group:last-of-type {
+            border-bottom: none;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
 <form id="survey-form">
-  <p>
-    What do you identify as?<br>
-    <input type="radio" name="gender" value="Male"> Male<br>
-    <input type="radio" name="gender" value="Female"> Female<br>
-    <input type="radio" name="gender" value="Prefer not to say"> Prefer not to say
-  </p>
+    <h2>3D Printing Survey</h2>
 
-  <p>
-    Do you own a 3D Printer?<br>
-    <input type="radio" name="owns_printer" value="Yes" onclick="togglePrinter(true)"> Yes<br>
-    <input type="radio" name="owns_printer" value="No" onclick="togglePrinter(false)"> No
-  </p>
+    <div class="question-group">
+        <p>What do you identify as?</p>
+        <label><input type="radio" name="gender" value="Male" required> Male</label>
+        <label><input type="radio" name="gender" value="Female"> Female</label>
+        <label><input type="radio" name="gender" value="Prefer not to say"> Prefer not to say</label>
+    </div>
 
-  <div id="printer_details" style="display:none;">
-    <p>
-      What brand of 3D printer do you have?<br>
-      <select id="brand" name="printer_brand" onchange="updateModels()">
-        <option value="">-- Select Brand --</option>
-        <option value="Bambu">Bambu</option>
-        <option value="Creality">Creality</option>
-        <option value="Prusa">Prusa</option>
-        <option value="Elegoo">Elegoo</option>
-        <option value="Qidi">Qidi</option>
-        <option value="Sovol">Sovol</option>
-        <option value="Anycubic">Anycubic</option>
-        <option value="Snapmaker">Snapmaker</option>
-        <option value="Flashforge">Flashforge</option>
-      </select>
-    </p>
+    <div class="question-group">
+        <p>Do you own a 3D Printer?</p>
+        <label><input type="radio" name="owns_printer" value="Yes" onclick="togglePrinter(true)" required> Yes</label>
+        <label><input type="radio" name="owns_printer" value="No" onclick="togglePrinter(false)"> No</label>
+    </div>
 
-    <p>
-      Which model?<br>
-      <select id="model" name="printer_model">
-        <option value="">-- Select Brand First --</option>
-      </select>
-    </p>
-  </div>
+    <div id="printer_details" style="display:none;" class="question-group">
+        <p>What brand of 3D printer do you have?</p>
+        <select id="brand" name="printer_brand" onchange="updateModels()">
+            <option value="">-- Select Brand --</option>
+            <option value="Bambu">Bambu</option>
+            <option value="Creality">Creality</option>
+            <option value="Prusa">Prusa</option>
+            <option value="Elegoo">Elegoo</option>
+            <option value="Qidi">Qidi</option>
+            <option value="Sovol">Sovol</option>
+            <option value="Anycubic">Anycubic</option>
+            <option value="Snapmaker">Snapmaker</option>
+            <option value="Flashforge">Flashforge</option>
+        </select>
 
-  <p>
-    Do you know how to code?<br>
-    <input type="radio" name="knows_code" value="Yes"> Yes<br>
-    <input type="radio" name="knows_code" value="No"> No<br>
-    <input type="radio" name="knows_code" value="ChatGPT"> No, I use chatgpt.
-  </p>
+        <p>Which model?</p>
+        <select id="model" name="printer_model">
+            <option value="">-- Select Brand First --</option>
+        </select>
+    </div>
 
-  <p>
-    What browser do you use?<br>
-    <select name="browser">
-      <option value="Chrome">Google Chrome</option>
-      <option value="Edge">Microsoft Edge</option>
-      <option value="Safari">Apple Safari</option>
-      <option value="Firefox">Mozilla Firefox</option>
-      <option value="Brave">Brave</option>
-      <option value="DuckDuckGo">DuckDuckGo Browser</option>
-      <option value="Tor">Tor Browser</option>
-      <option value="Arc">Arc</option>
-      <option value="Opera">Opera</option>
-      <option value="Opera GX">Opera GX</option>
-      <option value="Vivaldi">Vivaldi</option>
-    </select>
-  </p>
+    <div class="question-group">
+        <p>Do you know how to code?</p>
+        <label><input type="radio" name="knows_code" value="Yes" required> Yes</label>
+        <label><input type="radio" name="knows_code" value="No"> No</label>
+        <label><input type="radio" name="knows_code" value="ChatGPT"> No, I use ChatGPT</label>
+    </div>
 
-  <button type="submit">Submit Answers</button>
+    <div class="question-group">
+        <p>What browser do you use?</p>
+        <select name="browser" required>
+            <option value="">-- Select Browser --</option>
+            <option value="Chrome">Google Chrome</option>
+            <option value="Edge">Microsoft Edge</option>
+            <option value="Safari">Apple Safari</option>
+            <option value="Firefox">Mozilla Firefox</option>
+            <option value="Brave">Brave</option>
+            <option value="DuckDuckGo">DuckDuckGo Browser</option>
+            <option value="Tor">Tor Browser</option>
+            <option value="Arc">Arc</option>
+            <option value="Opera">Opera</option>
+            <option value="Opera GX">Opera GX</option>
+            <option value="Vivaldi">Vivaldi</option>
+        </select>
+    </div>
+
+    <button type="submit">Submit Answers</button>
 </form>
 
 <script>
-function togglePrinter(show) {
-  const printerDiv = document.getElementById('printer_details');
-  const brandSelect = document.getElementById('brand');
-  const modelSelect = document.getElementById('model');
+    function togglePrinter(show) {
+        const printerDiv = document.getElementById('printer_details');
+        const brandSelect = document.getElementById('brand');
+        const modelSelect = document.getElementById('model');
 
-  // Show or hide the section
-  printerDiv.style.display = show ? 'block' : 'none';
+        printerDiv.style.display = show ? 'block' : 'none';
+        brandSelect.required = show;
+        modelSelect.required = show;
+    }
 
-  // Enable or disable the 'required' rule based on visibility
-  brandSelect.required = show;
-  modelSelect.required = show;
-}
+    const printerData = {
+        "Bambu": ["X1-Carbon", "X1E", "P1S", "P1P", "A1", "A1 Mini", "H2D"],
+        "Creality": ["Ender 3 V3", "Ender 3 V2", "K1 Max", "K1 SE", "CR-10", "Halot-Mage"],
+        "Prusa": ["MK4S", "MK3S+", "MINI+", "Prusa XL", "SL1S"],
+        "Elegoo": ["Neptune 4 Pro", "Mars 5", "Saturn 4 Ultra", "Jupiter SE"],
+        "Qidi": ["X-Max 3", "X-Plus 3", "X-Smart 3", "X-Plus 2"],
+        "Sovol": ["SV06 Plus", "SV07 Plus", "SV08", "SV04 IDEX"],
+        "Anycubic": ["Kobra 2 Max", "Kobra 3", "Photon Mono M7 Pro", "Photon Mono 2"],
+        "Snapmaker": ["Artisan", "J1s IDEX", "Snapmaker 2.0 A350", "Snapmaker Ray"],
+        "Flashforge": ["Adventurer 5M Pro", "Adventurer 4 Pro", "Creator Pro 2", "Guider 3 Ultra"]
+    };
 
-const printerData = {
-  "Bambu": ["X1-Carbon", "X1E", "P1S", "P1P", "A1", "A1 Mini", "H2D"],
-  "Creality": ["Ender 3 V3", "Ender 3 V2", "K1 Max", "K1 SE", "CR-10", "Halot-Mage"],
-  "Prusa": ["MK4S", "MK3S+", "MINI+", "Prusa XL", "SL1S"],
-  "Elegoo": ["Neptune 4 Pro", "Mars 5", "Saturn 4 Ultra", "Jupiter SE"],
-  "Qidi": ["X-Max 3", "X-Plus 3", "X-Smart 3", "X-Plus 2"],
-  "Sovol": ["SV06 Plus", "SV07 Plus", "SV08", "SV04 IDEX"],
-  "Anycubic": ["Kobra 2 Max", "Kobra 3", "Photon Mono M7 Pro", "Photon Mono 2"],
-  "Snapmaker": ["Artisan", "J1s IDEX", "Snapmaker 2.0 A350", "Snapmaker Ray"],
-  "Flashforge": ["Adventurer 5M Pro", "Adventurer 4 Pro", "Creator Pro 2", "Guider 3 Ultra"]
-};
+    function updateModels() {
+        const brand = document.getElementById('brand').value;
+        const modelSelect = document.getElementById('model');
+        modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
 
-function updateModels() {
-  const brand = document.getElementById('brand').value;
-  const modelSelect = document.getElementById('model');
-  modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+        if (printerData[brand]) {
+            printerData[brand].forEach(m => {
+                let opt = document.createElement('option');
+                opt.value = m;
+                opt.innerHTML = m;
+                modelSelect.appendChild(opt);
+            });
+        }
+    }
 
-  if (printerData[brand]) {
-    printerData[brand].forEach(m => {
-      let opt = document.createElement('option');
-      opt.value = m;
-      opt.innerHTML = m;
-      modelSelect.appendChild(opt);
+    const form = document.getElementById('survey-form');
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch("https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/sheet1", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify([data])
+        })
+        .then(response => response.json())
+        .then(result => {
+            alert("Form submitted successfully!");
+            form.reset();
+            togglePrinter(false); 
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("There was an error saving your data.");
+        });
     });
-  }
-}
-
-const form = document.getElementById('survey-form');
-form.addEventListener('submit', e => {
-  e.preventDefault();
-  
-  const formData = new FormData(form);
-  const data = Object.fromEntries(formData.entries());
-
-  fetch("https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/sheet1", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify([data])
-  })
-  .then(response => response.json())
-  .then(result => {
-    alert("Form submitted successfully!");
-    form.reset();
-    togglePrinter(false); // Hide the printer section again after reset
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert("There was an error saving your data.");
-  });
-});
 </script>
+
+</body>
+</html>
