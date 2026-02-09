@@ -3,67 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Printing Survey Dashboard</title>
+    <title>N.E.R.D.S Club Statistics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Ensures padding doesn't break the layout width */
         * { box-sizing: border-box; }
-
-        body { 
-            font-family: sans-serif; 
-            padding: 20px; 
-            background: #f4f4f4; 
-            margin: 0;
-        }
-
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; margin: 0; }
         h2 { text-align: center; margin-bottom: 10px; }
 
-        /* Status and Count Header */
-        .header-info {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
+        .header-info { text-align: center; margin-bottom: 20px; }
         .stat-card { 
-            background: #36A2EB; 
-            color: white; 
-            padding: 15px; 
-            border-radius: 8px; 
-            display: inline-block;
-            min-width: 200px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-            margin-bottom: 10px;
+            background: #36A2EB; color: white; padding: 15px; border-radius: 8px; 
+            display: inline-block; min-width: 200px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            margin-bottom: 15px;
         }
 
-        #status { color: #666; font-size: 0.85em; }
+        /* Dropdown Styling */
+        .filter-section { margin-bottom: 20px; }
+        select {
+            padding: 10px; border-radius: 5px; border: 1px solid #ccc;
+            font-size: 1em; width: 250px; cursor: pointer;
+        }
 
-        /* The main flexible container */
         .container { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 20px; 
-            justify-content: center; 
-            max-width: 1400px; 
-            margin: 0 auto; 
+            display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; 
+            max-width: 1400px; margin: 0 auto; 
         }
 
-        /* Each chart box fits 2 per row on large screens */
         .chart-box { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            flex: 1 1 calc(50% - 20px); /* Grow, shrink, and base width */
-            min-width: 320px; /* Ensures they don't get too skinny */
-            max-width: 650px;
+            background: white; padding: 20px; border-radius: 8px; 
+            flex: 1 1 calc(50% - 20px); min-width: 320px; max-width: 650px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
         }
 
-        canvas { width: 100% !important; height: auto !important; }
+        /* Class to hide unselected charts */
+        .hidden { display: none; }
 
-        /* Mobile adjustment */
-        @media (max-width: 768px) {
-            .chart-box { flex: 1 1 100%; }
-        }
+        @media (max-width: 768px) { .chart-box { flex: 1 1 100%; } }
     </style>
 </head>
 <body>
@@ -71,18 +46,26 @@
     <div class="header-info">
         <h2>Survey Results Dashboard</h2>
         <div class="stat-card">
-            <div style="font-size: 0.8em; text-transform: uppercase; opacity: 0.9;">Total Submissions</div>
+            <div style="font-size: 0.8em; text-transform: uppercase;">Total N.E.R.D.S Members</div>
             <div id="submissionCount" style="font-size: 2em; font-weight: bold;">0</div>
         </div>
+        
+        <div class="filter-section">
+            <label for="brandFilter"><strong>Filter by Brand:</strong> </label>
+            <select id="brandFilter" onchange="filterCharts()">
+                <option value="all">All Brands</option>
+            </select>
+        </div>
+        
         <div id="status">Last updated: Never</div>
     </div>
     
     <div class="container" id="main-container">
-        <div class="chart-box">
+        <div class="chart-box" id="genderBox">
             <h3>Gender Distribution</h3>
             <canvas id="genderChart"></canvas>
         </div>
-        <div class="chart-box">
+        <div class="chart-box" id="browserBox">
             <h3>Browser Usage</h3>
             <canvas id="browserChart"></canvas>
         </div>
@@ -98,42 +81,69 @@
                 const data = await response.json();
                 if (data && Array.isArray(data)) {
                     document.getElementById('submissionCount').innerText = data.length;
+                    updateDropdown(data);
                     renderCharts(data);
                     document.getElementById('status').innerText = "Last updated: " + new Date().toLocaleTimeString();
                 }
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error:", error);
             }
+        }
+
+        function updateDropdown(data) {
+            const dropdown = document.getElementById('brandFilter');
+            const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))].sort();
+            const currentSelection = dropdown.value;
+
+            // Clear existing except "All"
+            dropdown.innerHTML = '<option value="all">All Brands</option>';
+            
+            brands.forEach(brand => {
+                const opt = document.createElement('option');
+                opt.value = brand;
+                opt.innerText = brand;
+                dropdown.appendChild(opt);
+            });
+            dropdown.value = currentSelection;
+        }
+
+        function filterCharts() {
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const brandBoxes = document.querySelectorAll('.brand-box');
+            
+            brandBoxes.forEach(box => {
+                if (selectedBrand === "all" || box.getAttribute('data-brand') === selectedBrand) {
+                    box.classList.remove('hidden');
+                } else {
+                    box.classList.add('hidden');
+                }
+            });
         }
 
         function renderCharts(data) {
             const container = document.getElementById('main-container');
             const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))];
 
-            // Remove existing dynamic brand boxes to refresh the list
             document.querySelectorAll('.brand-box').forEach(el => el.remove());
 
             brands.forEach(brand => {
                 const brandData = data.filter(d => d.printer_brand === brand);
                 const modelCounts = {};
-                brandData.forEach(d => {
-                    if (d.printer_model) {
-                        modelCounts[d.printer_model] = (modelCounts[d.printer_model] || 0) + 1;
-                    }
-                });
+                brandData.forEach(d => { if (d.printer_model) modelCounts[d.printer_model] = (modelCounts[d.printer_model] || 0) + 1; });
 
                 const canvasId = `chart-${brand.replace(/[^a-z0-9]/gi, '')}`;
                 const chartBox = document.createElement('div');
                 chartBox.className = 'chart-box brand-box';
+                chartBox.setAttribute('data-brand', brand);
                 chartBox.innerHTML = `<h3>${brand} Models</h3><canvas id="${canvasId}"></canvas>`;
                 
-                // Add brand charts to the start of the container
                 container.prepend(chartBox);
-
                 renderEnhancedChart(canvasId, 'bar', modelCounts, '#36A2EB');
             });
 
-            // Render static charts
+            // Re-apply filter after re-rendering
+            filterCharts();
+
             const genderCounts = {};
             data.forEach(d => { if(d.gender) genderCounts[d.gender] = (genderCounts[d.gender] || 0) + 1; });
             renderEnhancedChart('genderChart', 'pie', genderCounts, ['#36A2EB', '#FF6384', '#FFCE56']);
@@ -144,39 +154,26 @@
         }
 
         function renderEnhancedChart(id, type, countMap, colors) {
-            if (chartInstances[id]) {
-                chartInstances[id].destroy();
-            }
-
+            if (chartInstances[id]) chartInstances[id].destroy();
             const labels = Object.keys(countMap);
             const values = Object.values(countMap);
             const total = values.reduce((a, b) => a + b, 0);
 
-            const canvas = document.getElementById(id);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
+            const ctx = document.getElementById(id).getContext('2d');
             chartInstances[id] = new Chart(ctx, {
                 type: type,
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors
-                    }]
-                },
+                data: { labels: labels, datasets: [{ data: values, backgroundColor: colors }] },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
                     animation: false,
                     plugins: {
-                        legend: { position: 'bottom' },
+                        legend: { display: type === 'pie', position: 'bottom' },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "0%";
-                                    return `${context.label}: ${value} (${percentage})`;
+                                label: (context) => {
+                                    const val = context.raw;
+                                    const perc = total > 0 ? ((val / total) * 100).toFixed(1) + "%" : "0%";
+                                    return `${context.label}: ${val} (${perc})`;
                                 }
                             }
                         }
@@ -187,7 +184,7 @@
         }
 
         fetchData();
-        setInterval(fetchData, 30000); // 30 second auto-refresh
+        setInterval(fetchData, 30000);
     </script>
 </body>
 </html>
