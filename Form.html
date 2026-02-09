@@ -13,24 +13,34 @@
 
   <p>
     Do you own a 3D Printer?<br>
-    <input type="radio" name="owns_printer" value="Yes"> Yes<br>
-    <input type="radio" name="owns_printer" value="No"> No
+    <input type="radio" name="owns_printer" value="Yes" onclick="togglePrinter(true)"> Yes<br>
+    <input type="radio" name="owns_printer" value="No" onclick="togglePrinter(false)"> No
   </p>
 
-  <p>
-    What brand of 3D printer do you have?<br>
-    <select name="printer_brand">
-      <option value="Bambu">Bambu</option>
-      <option value="Creality">Creality</option>
-      <option value="Prusa">Prusa</option>
-      <option value="Elegoo">Elegoo</option>
-      <option value="Qidi">Qidi</option>
-      <option value="Sovol">Sovol</option>
-      <option value="Anycubic">Anycubic</option>
-      <option value="Snapmaker">Snapmaker</option>
-      <option value="Flashforge">Flashforge</option>
-    </select>
-  </p>
+  <div id="printer_details" style="display:none;">
+    <p>
+      What brand of 3D printer do you have?<br>
+      <select id="brand" name="printer_brand" onchange="updateModels()">
+        <option value="">-- Select Brand --</option>
+        <option value="Bambu">Bambu</option>
+        <option value="Creality">Creality</option>
+        <option value="Prusa">Prusa</option>
+        <option value="Elegoo">Elegoo</option>
+        <option value="Qidi">Qidi</option>
+        <option value="Sovol">Sovol</option>
+        <option value="Anycubic">Anycubic</option>
+        <option value="Snapmaker">Snapmaker</option>
+        <option value="Flashforge">Flashforge</option>
+      </select>
+    </p>
+
+    <p>
+      Which model?<br>
+      <select id="model" name="printer_model">
+        <option value="">-- Select Brand First --</option>
+      </select>
+    </p>
+  </div>
 
   <p>
     Do you know how to code?<br>
@@ -58,3 +68,36 @@
 
   <button type="submit">Submit Answers</button>
 </form>
+
+<script>
+  function togglePrinter(show) {
+    document.getElementById('printer_details').style.display = show ? 'block' : 'none';
+  }
+
+  const printerData = {
+    "Bambu": ["X1-Carbon", "X1E", "P1S", "P1P", "A1", "A1 Mini"],
+    "Creality": ["Ender 3 V3", "Ender 3 V2", "K1 Max", "K1 SE", "CR-10", "Halot-Mage"],
+    "Prusa": ["MK4S", "MK3S+", "MINI+", "Prusa XL", "SL1S"],
+    "Elegoo": ["Neptune 4 Pro", "Mars 5", "Saturn 4 Ultra", "Jupiter SE"],
+    "Qidi": ["X-Max 3", "X-Plus 3", "X-Smart 3", "X-Plus 2"],
+    "Sovol": ["SV06 Plus", "SV07 Plus", "SV08", "SV04 IDEX"],
+    "Anycubic": ["Kobra 2 Max", "Kobra 3", "Photon Mono M7 Pro", "Photon Mono 2"],
+    "Snapmaker": ["Artisan", "J1s IDEX", "Snapmaker 2.0 A350", "Snapmaker Ray"],
+    "Flashforge": ["Adventurer 5M Pro", "Adventurer 4 Pro", "Creator Pro 2", "Guider 3 Ultra"]
+  };
+
+  function updateModels() {
+    const brand = document.getElementById('brand').value;
+    const modelSelect = document.getElementById('model');
+    modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+
+    if (printerData[brand]) {
+      printerData[brand].forEach(m => {
+        let opt = document.createElement('option');
+        opt.value = m;
+        opt.innerHTML = m;
+        modelSelect.appendChild(opt);
+      });
+    }
+  }
+</script>
