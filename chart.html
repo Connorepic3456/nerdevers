@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Printing Survey Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        .chart-box { background: white; padding: 20px; border-radius: 8px; width: 400px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h2>Survey Results Dashboard</h2>
+    
+    <div class="container">
+        <div class="chart-box">
+            <h3>Gender Distribution</h3>
+            <canvas id="genderChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>Browser Usage</h3>
+            <canvas id="browserChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const steinUrl = "https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/Sheet1";
+
+        async function fetchData() {
+            try {
+                const response = await fetch(steinUrl);
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    alert("No data found in the Google Sheet!");
+                    return;
+                }
+
+                renderCharts(data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        function renderCharts(data) {
+            // Count Gender Data
+            const genderCounts = {};
+            // Count Browser Data
+            const browserCounts = {};
+
+            data.forEach(entry => {
+                genderCounts[entry.gender] = (genderCounts[entry.gender] || 0) + 1;
+                browserCounts[entry.browser] = (browserCounts[entry.browser] || 0) + 1;
+            });
+
+            // Create Gender Chart
+            new Chart(document.getElementById('genderChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(genderCounts),
+                    datasets: [{
+                        data: Object.values(genderCounts),
+                        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
+                    }]
+                }
+            });
+
+            // Create Browser Chart
+            new Chart(document.getElementById('browserChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(browserCounts),
+                    datasets: [{
+                        label: 'Users',
+                        data: Object.values(browserCounts),
+                        backgroundColor: '#4BC0C0'
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
