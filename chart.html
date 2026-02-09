@@ -2,20 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>3D Printing Survey Dashboard (Auto-Update)</title>
+    <title>3D Printing Survey Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
         .chart-box { background: white; padding: 20px; border-radius: 8px; width: 450px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .stat-card { background: #36A2EB; color: white; padding: 15px; border-radius: 8px; text-align: center; width: 200px; margin: 0 auto 20px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         h2, h3 { text-align: center; }
         #printer-charts-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; width: 100%; }
-        #status { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        #status { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <h2>Survey Results Dashboard</h2>
+    
+    <div class="stat-card">
+        <div style="font-size: 0.9em; text-transform: uppercase;">Total Submissions</div>
+        <div id="submissionCount" style="font-size: 2em; font-weight: bold;">0</div>
+    </div>
+
     <div id="status">Last updated: Never</div>
     
     <div class="container">
@@ -32,13 +39,14 @@
 
     <script>
         const steinUrl = "https://api.steinhq.com/v1/storages/698a4124affba40a624a9ad0/Sheet1";
-        let chartInstances = {}; // Store charts here so we can destroy them before updating
+        let chartInstances = {};
 
         async function fetchData() {
             try {
                 const response = await fetch(steinUrl);
                 const data = await response.json();
-                if (data.length > 0) {
+                if (data.length >= 0) {
+                    document.getElementById('submissionCount').innerText = data.length;
                     renderCharts(data);
                     document.getElementById('status').innerText = "Last updated: " + new Date().toLocaleTimeString();
                 }
@@ -51,7 +59,6 @@
             const printerContainer = document.getElementById('printer-charts-container');
             const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))];
 
-            // Clear the printer container for a fresh draw if brands changed
             printerContainer.innerHTML = '';
 
             brands.forEach(brand => {
@@ -72,7 +79,6 @@
                 renderEnhancedChart(canvasId, 'bar', modelCounts, '#36A2EB');
             });
 
-            // Render static charts
             const genderCounts = {};
             data.forEach(d => { if(d.gender) genderCounts[d.gender] = (genderCounts[d.gender] || 0) + 1; });
             renderEnhancedChart('genderChart', 'pie', genderCounts, ['#36A2EB', '#FF6384', '#FFCE56']);
@@ -83,7 +89,6 @@
         }
 
         function renderEnhancedChart(id, type, countMap, colors) {
-            // Destroy existing chart instance if it exists to prevent overlap
             if (chartInstances[id]) {
                 chartInstances[id].destroy();
             }
@@ -92,7 +97,10 @@
             const values = Object.values(countMap);
             const total = values.reduce((a, b) => a + b, 0);
 
-            const ctx = document.getElementById(id).getContext('2d');
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
             chartInstances[id] = new Chart(ctx, {
                 type: type,
                 data: {
@@ -104,13 +112,13 @@
                 },
                 options: {
                     responsive: true,
-                    animation: false, // Turn off animation for smoother background updates
+                    animation: false,
                     plugins: {
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     const value = context.raw;
-                                    const percentage = ((value / total) * 100).toFixed(1) + "%";
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "0%";
                                     return `${context.label}: ${value} (${percentage})`;
                                 }
                             }
@@ -121,10 +129,7 @@
             });
         }
 
-        // Initial fetch
         fetchData();
-
-        // Update every 30 seconds (30000 milliseconds)
         setInterval(fetchData, 30000);
     </script>
 </body>
