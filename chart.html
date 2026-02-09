@@ -7,8 +7,9 @@
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-        .chart-box { background: white; padding: 20px; border-radius: 8px; width: 500px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { text-align: center; }
+        .chart-box { background: white; padding: 20px; border-radius: 8px; width: 450px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2, h3 { text-align: center; }
+        #printer-charts-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; width: 100%; }
     </style>
 </head>
 <body>
@@ -16,14 +17,15 @@
     <h2>Survey Results Dashboard</h2>
     
     <div class="container">
+        <div id="printer-charts-container"></div>
+
         <div class="chart-box">
-            <h3>Printer Models by Brand</h3>
-            <canvas id="modelChart"></canvas>
+            <h3>Gender Distribution</h3>
+            <canvas id="genderChart"></canvas>
         </div>
         <div class="chart-box">
-            <h3>Gender & Browser</h3>
-            <canvas id="genderChart"></canvas>
-            <canvas id="browserChart" style="margin-top:20px;"></canvas>
+            <h3>Browser Usage</h3>
+            <canvas id="browserChart"></canvas>
         </div>
     </div>
 
@@ -42,47 +44,64 @@
 
         function renderCharts(data) {
             const brands = [...new Set(data.map(d => d.printer_brand).filter(Boolean))];
-            const models = [...new Set(data.map(d => d.printer_model).filter(Boolean))];
-            
-            // Create a dataset for every unique model found
-            const datasets = models.map((modelName, index) => {
-                const modelCounts = brands.map(brand => {
-                    return data.filter(d => d.printer_brand === brand && d.printer_model === modelName).length;
+            const printerContainer = document.getElementById('printer-charts-container');
+
+            // Create a separate chart for each brand
+            brands.forEach(brand => {
+                const brandData = data.filter(d => d.printer_brand === brand);
+                const modelCounts = {};
+                brandData.forEach(d => {
+                    if (d.printer_model) {
+                        modelCounts[d.printer_model] = (modelCounts[d.printer_model] || 0) + 1;
+                    }
                 });
 
-                return {
-                    label: modelName,
-                    data: modelCounts,
-                    backgroundColor: `hsl(${index * (360 / models.length)}, 70%, 60%)`
-                };
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+                chartBox.innerHTML = `<h3>${brand} Models</h3><canvas id="chart-${brand.replace(/\s+/g, '')}"></canvas>`;
+                printerContainer.appendChild(chartBox);
+
+                renderEnhancedChart(`chart-${brand.replace(/\s+/g, '')}`, 'bar', modelCounts, '#36A2EB');
             });
 
-            // Model Stacked Bar Chart
-            new Chart(document.getElementById('modelChart'), {
-                type: 'bar',
-                data: { labels: brands, datasets: datasets },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
-                    }
-                }
-            });
+            // Render Gender and Browser charts
+            const genderCounts = {};
+            data.forEach(d => { if(d.gender) genderCounts[d.gender] = (genderCounts[d.gender] || 0) + 1; });
+            renderEnhancedChart('genderChart', 'pie', genderCounts, ['#36A2EB', '#FF6384', '#FFCE56']);
 
-            // Basic charts for Gender and Browser
-            renderSimpleChart('genderChart', 'pie', data, 'gender', ['#36A2EB', '#FF6384', '#FFCE56']);
-            renderSimpleChart('browserChart', 'bar', data, 'browser', '#4BC0C0');
+            const browserCounts = {};
+            data.forEach(d => { if(d.browser) browserCounts[d.browser] = (browserCounts[d.browser] || 0) + 1; });
+            renderEnhancedChart('browserChart', 'bar', browserCounts, '#4BC0C0');
         }
 
-        function renderSimpleChart(id, type, data, key, colors) {
-            const counts = {};
-            data.forEach(d => { if(d[key]) counts[d[key]] = (counts[d[key]] || 0) + 1; });
+        function renderEnhancedChart(id, type, countMap, colors) {
+            const labels = Object.keys(countMap);
+            const values = Object.values(countMap);
+            const total = values.reduce((a, b) => a + b, 0);
+
             new Chart(document.getElementById(id), {
                 type: type,
                 data: {
-                    labels: Object.keys(counts),
-                    datasets: [{ data: Object.values(counts), backgroundColor: colors }]
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / total) * 100).toFixed(1) + "%";
+                                    return `${context.label}: ${value} (${percentage})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: type === 'bar' ? { y: { beginAtZero: true, ticks: { stepSize: 1 } } } : {}
                 }
             });
         }
