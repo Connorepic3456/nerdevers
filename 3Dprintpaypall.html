@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Page</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        .payment-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="payment-container">
+        <h2>Complete Your Purchase</h2>
+        <div id="paypal-container-FT5GRAYPGU3UE"></div>
+    </div>
+
+    <script 
+      src="https://www.paypal.com/sdk/js?client-id=BAA0LtqJdF8R3z1FbEQalPlXGifnZuvxH--IYGZ2e3n-BA5h1izi-oKpRxzr13JebwE6CTMtIyOFsstUfA&components=hosted-buttons&enable-funding=venmo&currency=USD">
+    </script>
+    <script>
+      paypal.HostedButtons({
+        hostedButtonId: "FT5GRAYPGU3UE",
+      }).render("#paypal-container-FT5GRAYPGU3UE")
+    </script>
+
+</body>
+</html>
