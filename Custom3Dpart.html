@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Order & Design</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 15px; margin: 0; }
+        .container { max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #1a1a1a; text-align: center; margin-top: 0; border-bottom: 2px solid #28a745; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #444; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn-submit { 
+            display: block;
+            background-color: #28a745; 
+            color: white; 
+            text-align: center;
+            padding: 15px; 
+            width: 100%; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 18px; 
+            margin-top: 25px; 
+            font-weight: bold; 
+            border: none;
+        }
+        .btn-submit:hover { background-color: #218838; }
+
+        .file-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px dashed #ccc; }
+        .btn-no-file { background-color: #6c757d; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 10px; }
+        
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: white; margin: 15% auto; padding: 20px; border-radius: 10px; width: 85%; max-width: 350px; text-align: center; position: relative; }
+        .search-links a { display: block; padding: 10px; color: #007bff; text-decoration: none; border-bottom: 1px solid #eee; }
+        .close { position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 24px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>3D Print Request</h2>
+    
+    <form action="https://formsubmit.co/Forms@nerdsvers.uk" method="POST" enctype="multipart/form-data">
+        
+        <label>Full Name</label>
+        <input type="text" name="Client Name" placeholder="Your Name" required>
+
+        <label>Contact Info (Email or Phone)</label>
+        <input type="text" name="Contact Info" placeholder="email@example.com" required>
+
+        <label>Purpose of the Part</label>
+        <input type="text" name="Purpose" placeholder="What is this being used for?" required>
+
+        <label>Dimensions</label>
+        <input type="text" name="Dimensions" placeholder="e.g. 100mm x 50mm x 20mm" required>
+
+        <label>Material Preference</label>
+        <select name="Filament">
+            <option value="PLA">PLA (General Purpose)</option>
+            <option value="PETG">PETG (Strong/Outdoor)</option>
+            <option value="ABS">ABS (Stronger than PETG)</option>
+            <option value="TPU">TPU (Flexible)</option>
+            <option value="Other">Other (Specify in Description)</option>
+        </select>
+
+        <label>Deadline</label>
+        <input type="date" name="Deadline" required>
+
+        <label>Full Project Description</label>
+        <textarea name="Project Description" rows="4" placeholder="Details about your project..." required></textarea>
+
+        <div class="file-box">
+            <label>Upload Files (STL/OBJ/Images)</label>
+            <input type="file" name="Attachment" accept=".stl,.obj,image/*,video/*" multiple>
+            <button type="button" class="btn-no-file" onclick="openModal()">I don't have a file yet</button>
+        </div>
+
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+
+        <button type="submit" class="btn-submit">Submit Project to Nerds</button>
+    </form>
+</div>
+
+<div id="fileModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>Missing a file?</h3>
+        <p>Search these sites for free designs:</p>
+        <div class="search-links">
+            <a href="https://makerworld.com" target="_blank">MakerWorld</a>
+            <a href="https://www.printables.com" target="_blank">Printables</a>
+            <a href="https://www.thingiverse.com" target="_blank">Thingiverse</a>
+        </div>
+        <p>Need a custom design? Mention it in the description!</p>
+    </div>
+</div>
+
+<script>
+    function openModal() { document.getElementById("fileModal").style.display = "block"; }
+    function closeModal() { document.getElementById("fileModal").style.display = "none"; }
+    window.onclick = function(event) {
+        if (event.target == document.getElementById("fileModal")) { closeModal(); }
+    }
+</script>
+
+</body>
+</html>
