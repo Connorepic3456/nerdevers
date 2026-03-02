@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Print Order & Design</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 15px; margin: 0; }
+        .container { max-width: 450px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #1a1a1a; text-align: center; margin-top: 0; }
+        label { display: block; margin-top: 12px; font-weight: 600; color: #444; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn-submit { 
+            display: block;
+            background-color: #28a745; 
+            color: white; 
+            text-align: center;
+            padding: 15px; 
+            width: 100%; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin-top: 20px; 
+            font-weight: bold; 
+            border: none;
+            box-sizing: border-box;
+        }
+        .btn-submit:hover { background-color: #218838; }
+
+        .btn-no-file { background-color: #6c757d; color: white; border: none; padding: 10px; width: 100%; border-radius: 6px; cursor: pointer; font-size: 13px; margin-top: 10px; }
+        .btn-no-file:hover { background-color: #5a6268; }
+        
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: white; margin: 15% auto; padding: 20px; border-radius: 10px; width: 85%; max-width: 350px; text-align: center; position: relative; }
+        .search-links { text-align: left; margin: 15px 0; }
+        .search-links a { display: block; padding: 10px; color: #007bff; text-decoration: none; border-bottom: 1px solid #eee; font-weight: 500; }
+        
+        .btn-custom { display: block; background-color: #007bff; color: white !important; padding: 12px; text-decoration: none; border-radius: 6px; margin-top: 15px; font-weight: bold; width: 100%; cursor: pointer; font-size: 14px; box-sizing: border-box; }
+        
+        .close { position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 24px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>3D Print Request</h2>
+    
+    <form action="https://formsubmit.co/Forms@nerdsvers.uk" method="POST" enctype="multipart/form-data">
+        
+        <label>Full Name</label>
+        <input type="text" name="Client Name" placeholder="Your Name" required>
+
+        <label>Email</label>
+        <input type="email" name="Email Address" placeholder="email@example.com" required>
+
+        <label>Upload File (STL/OBJ)</label>
+        <input type="file" name="3D File" accept=".stl,.obj">
+        
+        <button type="button" class="btn-no-file" onclick="openModal()">I don't have a file / Need a custom part</button>
+
+        <label>Material Preference</label>
+        <select name="Material">
+            <option>PLA (General Purpose)</option>
+            <option>PETG (Strong/Outdoor)</option>
+            <option>ABS (Stronger than PETG)</option>
+            <option>TPU (Flexible)</option>
+            <option>SILK (Shiny PLA)</option>
+            <option>CARBON FIBER (SUPER strong)</option>
+        </select>
+
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" value="https://www.nerdsvers.uk/payment">
+
+        <button type="submit" class="btn-submit">Submit & Proceed to Payment</button>
+    </form>
+</div>
+
+<div id="fileModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>Missing a file?</h3>
+        <p>Search these sites to see if the part exists for free:</p>
+        
+        <div class="search-links">
+            <a href="https://makerworld.com" target="_blank">🚢 MakerWorld</a>
+            <a href="https://www.printables.com" target="_blank">🏁 Printables</a>
+            <a href="https://www.thingiverse.com" target="_blank">🌌 Thingiverse</a>
+            <a href="https://www.thangs.com" target="_blank">🔍 Thangs (Search All)</a>
+        </div>
+
+        <p>Still nothing?</p>
+        <a href="https://www.nerdsvers.uk/custom-part-application" target="_blank" class="btn-custom">Get Custom Part Application</a>
+    </div>
+</div>
+
+<script>
+    function openModal() { document.getElementById("fileModal").style.display = "block"; }
+    function closeModal() { document.getElementById("fileModal").style.display = "none"; }
+    
+    window.onclick = function(event) {
+        if (event.target == document.getElementById("fileModal")) { closeModal(); }
+    }
+</script>
+
+</body>
+</html>
