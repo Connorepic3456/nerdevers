@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI vs Real Game</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        .container { display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
+        .img-card { background: #333; padding: 10px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        img { width: 400px; height: 400px; object-fit: cover; cursor: pointer; border-radius: 10px; border: 4px solid transparent; transition: 0.3s; }
+        img:hover { border-color: #00d4ff; transform: scale(1.02); }
+        #message { font-size: 1.5rem; margin: 20px 0; height: 40px; color: #00d4ff; }
+        .score-board { font-size: 1.2rem; background: #333; display: inline-block; padding: 10px 20px; border-radius: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>AI or Real?</h1>
+    <div class="score-board">Score: <span id="score">0</span></div>
+    <div id="message">Loading images...</div>
+
+    <div class="container">
+        <div class="img-card">
+            <p>Image 1</p>
+            <img id="img0" onclick="checkAnswer(0)">
+        </div>
+        <div class="img-card">
+            <p>Image 2</p>
+            <img id="img1" onclick="checkAnswer(1)">
+        </div>
+    </div>
+
+    <script>
+        // --- UPDATE THESE TWO LINES ---
+        const username = 'YOUR_GITHUB_USERNAME';
+        const repo = 'YOUR_REPO_NAME';
+        // ------------------------------
+
+        let aiImages = [];
+        let realImages = [];
+        let score = 0;
+        let aiIndex = 0;
+
+        async function fetchImages() {
+            try {
+                // Fetch list from the 'ai' folder
+                const aiRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/ai`);
+                const aiData = await aiRes.json();
+                aiImages = aiData.map(file => file.path);
+
+                // Fetch list from the 'real' folder
+                const realRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/real`);
+                const realData = await realRes.json();
+                realImages = realData.map(file => file.path);
+
+                loadRound();
+            } catch (err) {
+                document.getElementById('message').innerText = "Error loading images. Check your folder names!";
+            }
+        }
+
+        function loadRound() {
+            if (aiImages.length === 0 || realImages.length === 0) return;
+
+            // Pick random paths
+            const randomAi = aiImages[Math.floor(Math.random() * aiImages.length)];
+            const randomReal = realImages[Math.floor(Math.random() * realImages.length)];
+
+            // Randomize position (0 = Left, 1 = Right)
+            aiIndex = Math.random() > 0.5 ? 1 : 0;
+            
+            // Set the images
+            document.getElementById('img' + aiIndex).src = randomAi;
+            document.getElementById('img' + (1 - aiIndex)).src = randomReal;
+            document.getElementById('message').innerText = "Which one was made by AI?";
+        }
+
+        function checkAnswer(clickedIndex) {
+            if (clickedIndex === aiIndex) {
+                score++;
+                document.getElementById('score').innerText = score;
+                document.getElementById('message').innerText = "Correct! ✨";
+                setTimeout(loadRound, 1000);
+            } else {
+                document.getElementById('message').innerText = "Wrong! That was a real photo. ❌";
+                setTimeout(loadRound, 2000);
+            }
+        }
+
+        fetchImages();
+    </script>
+</body>
+</html>
