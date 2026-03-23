@@ -11,16 +11,20 @@
         .media-container:hover { border-color: #00d4ff; }
         img, video { max-width: 100%; max-height: 100%; object-fit: contain; }
         #message { font-size: 1.5rem; margin: 20px 0; height: 40px; color: #00d4ff; }
-        #start-btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: #00d4ff; border: none; border-radius: 5px; color: #1a1a1a; font-weight: bold; }
+        .btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }
+        #start-btn { background: #00d4ff; color: #1a1a1a; }
+        #next-btn { background: #00d4ff; color: #1a1a1a; }
+        #retry-btn { background: #ffcc00; color: #1a1a1a; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <h1>AI or Real?</h1>
+    
     <div id="setup">
         <p>Press start to enable sound and begin the game!</p>
-        <button id="start-btn" onclick="startGame()">START GAME</button>
+        <button id="start-btn" class="btn" onclick="startGame()">START GAME</button>
     </div>
 
     <div id="game-ui" class="hidden">
@@ -37,6 +41,9 @@
                 <div class="media-container" id="box1" onclick="checkAnswer(1)"></div>
             </div>
         </div>
+
+        <button id="next-btn" class="btn hidden" onclick="loadRound()">NEXT ROUND</button>
+        <button id="retry-btn" class="btn hidden" onclick="resetGame()">TRY AGAIN</button>
     </div>
 
     <script>
@@ -45,8 +52,11 @@
 
         let aiFiles = [];
         let realFiles = [];
+        let originalAi = [];
+        let originalReal = [];
         let score = 0;
         let aiIndex = 0;
+        let canClick = true;
 
         function startGame() {
             document.getElementById('setup').classList.add('hidden');
@@ -58,17 +68,25 @@
             try {
                 const aiRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/ai`);
                 const aiData = await aiRes.json();
-                // Map the paths to the raw GitHub URLs so they actually load
-                aiFiles = aiData.map(file => `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`);
+                originalAi = aiData.map(file => `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`);
 
                 const realRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/real`);
                 const realData = await realRes.json();
-                realFiles = realData.map(file => `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`);
+                originalReal = realData.map(file => `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`);
 
-                loadRound();
+                resetGame();
             } catch (err) {
                 document.getElementById('message').innerText = "Error loading files!";
             }
+        }
+
+        function resetGame() {
+            aiFiles = [...originalAi];
+            realFiles = [...originalReal];
+            score = 0;
+            document.getElementById('score').innerText = score;
+            document.getElementById('retry-btn').classList.add('hidden');
+            loadRound();
         }
 
         function createMediaElement(path) {
@@ -81,52 +99,60 @@
         }
 
         function loadRound() {
+            canClick = true;
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('box0').style.borderColor = "transparent";
+            document.getElementById('box1').style.borderColor = "transparent";
+
             if (aiFiles.length === 0 || realFiles.length === 0) {
                 document.getElementById('message').innerText = "Game Over! You've seen everything.";
+                document.getElementById('box0').innerHTML = "";
+                document.getElementById('box1').innerHTML = "";
+                document.getElementById('retry-btn').classList.remove('hidden');
                 return;
             }
 
-            // 1. Pick a random AI file first to set the "type" for this round
             const aiIdx = Math.floor(Math.random() * aiFiles.length);
             const chosenAi = aiFiles[aiIdx];
             const isVideo = chosenAi.toLowerCase().endsWith('.mp4') || chosenAi.toLowerCase().endsWith('.webm');
 
-            // 2. Find all Real files that match that same type
             const matchingRealFiles = realFiles.filter(path => {
                 const isRealVideo = path.toLowerCase().endsWith('.mp4') || path.toLowerCase().endsWith('.webm');
                 return isVideo === isRealVideo;
             });
 
-            // 3. If no match is found, try the next AI file (or end if stuck)
             if (matchingRealFiles.length === 0) {
-                aiFiles.splice(aiIdx, 1); // Remove it since we can't pair it
+                aiFiles.splice(aiIdx, 1);
                 loadRound(); 
                 return;
             }
 
-            // 4. Pick a random matching Real file
             const randomRealFile = matchingRealFiles[Math.floor(Math.random() * matchingRealFiles.length)];
             const realIdx = realFiles.indexOf(randomRealFile);
 
-            // 5. Remove both from the master lists so they never repeat
             aiFiles.splice(aiIdx, 1);
             realFiles.splice(realIdx, 1);
 
-            // 6. Display them
             aiIndex = Math.random() > 0.5 ? 1 : 0;
             document.getElementById('box' + aiIndex).innerHTML = createMediaElement(chosenAi);
             document.getElementById('box' + (1 - aiIndex)).innerHTML = createMediaElement(randomRealFile);
             document.getElementById('message').innerText = isVideo ? "Which video is AI?" : "Which picture is AI?";
         }
+
         function checkAnswer(clickedIndex) {
+            if (!canClick) return;
+            canClick = false;
+
+            document.getElementById('next-btn').classList.remove('hidden');
+            
             if (clickedIndex === aiIndex) {
                 score++;
                 document.getElementById('score').innerText = score;
-                document.getElementById('message').innerText = "Correct! ✨";
-                setTimeout(loadRound, 1500);
+                document.getElementById('message').innerText = "Correct! ✨ Click Next.";
+                document.getElementById('box' + clickedIndex).style.borderColor = "#00ff00";
             } else {
-                document.getElementById('message').innerText = "Wrong! That was real. ❌";
-                setTimeout(loadRound, 20000); // Reduced from 20000 to 2000 for better flow
+                document.getElementById('message').innerText = "Wrong! That was real. ❌ Click Next.";
+                document.getElementById('box' + clickedIndex).style.borderColor = "#ff0000";
             }
         }
     </script>
