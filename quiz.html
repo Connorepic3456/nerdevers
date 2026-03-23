@@ -58,22 +58,22 @@
             try {
                 const aiRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/ai`);
                 const aiData = await aiRes.json();
-                aiFiles = aiData.map(file => file.path);
+                // Map the paths to the raw GitHub URLs so they actually load
+                aiFiles = aiData.map(file => `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`);
 
                 const realRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/real`);
                 const realData = await realRes.json();
-                realFiles = realData.map(file => file.path);
+                realFiles = realData.map(file => `https://raw.githubusercontent.com/${username}/${repo}/main/${file.path}`);
 
                 loadRound();
             } catch (err) {
-                document.getElementById('message').innerText = "Error loading files! Make sure your folders exist.";
+                document.getElementById('message').innerText = "Error loading files!";
             }
         }
 
         function createMediaElement(path) {
             const isVideo = path.toLowerCase().endsWith('.mp4') || path.toLowerCase().endsWith('.webm');
             if (isVideo) {
-                // Removed 'muted' so you can hear it
                 return `<video src="${path}" autoplay loop playsinline></video>`;
             } else {
                 return `<img src="${path}">`;
@@ -81,15 +81,25 @@
         }
 
         function loadRound() {
-            if (aiFiles.length === 0 || realFiles.length === 0) return;
+            // Check if we still have files in both lists
+            if (aiFiles.length === 0 || realFiles.length === 0) {
+                document.getElementById('message').innerText = "Game Over! You've seen everything.";
+                return;
+            }
 
-            const randomAi = aiFiles[Math.floor(Math.random() * aiFiles.length)];
-            const randomReal = realFiles[Math.floor(Math.random() * realFiles.length)];
+            // Pick a random spot in the lists
+            const aiIdx = Math.floor(Math.random() * aiFiles.length);
+            const realIdx = Math.floor(Math.random() * realFiles.length);
 
+            // Use .splice(index, 1) to remove the item so it can't be picked again
+            const chosenAi = aiFiles.splice(aiIdx, 1)[0];
+            const chosenReal = realFiles.splice(realIdx, 1)[0];
+
+            // Randomly decide if AI is on the left (0) or right (1)
             aiIndex = Math.random() > 0.5 ? 1 : 0;
             
-            document.getElementById('box' + aiIndex).innerHTML = createMediaElement(randomAi);
-            document.getElementById('box' + (1 - aiIndex)).innerHTML = createMediaElement(randomReal);
+            document.getElementById('box' + aiIndex).innerHTML = createMediaElement(chosenAi);
+            document.getElementById('box' + (1 - aiIndex)).innerHTML = createMediaElement(chosenReal);
             document.getElementById('message').innerText = "Which one is AI?";
         }
 
@@ -101,7 +111,7 @@
                 setTimeout(loadRound, 1500);
             } else {
                 document.getElementById('message').innerText = "Wrong! That was real. ❌";
-                setTimeout(loadRound, 20000);
+                setTimeout(loadRound, 2000); // Reduced from 20000 to 2000 for better flow
             }
         }
     </script>
