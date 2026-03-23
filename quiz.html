@@ -81,28 +81,43 @@
         }
 
         function loadRound() {
-            // Check if we still have files in both lists
             if (aiFiles.length === 0 || realFiles.length === 0) {
                 document.getElementById('message').innerText = "Game Over! You've seen everything.";
                 return;
             }
 
-            // Pick a random spot in the lists
+            // 1. Pick a random AI file first to set the "type" for this round
             const aiIdx = Math.floor(Math.random() * aiFiles.length);
-            const realIdx = Math.floor(Math.random() * realFiles.length);
+            const chosenAi = aiFiles[aiIdx];
+            const isVideo = chosenAi.toLowerCase().endsWith('.mp4') || chosenAi.toLowerCase().endsWith('.webm');
 
-            // Use .splice(index, 1) to remove the item so it can't be picked again
-            const chosenAi = aiFiles.splice(aiIdx, 1)[0];
-            const chosenReal = realFiles.splice(realIdx, 1)[0];
+            // 2. Find all Real files that match that same type
+            const matchingRealFiles = realFiles.filter(path => {
+                const isRealVideo = path.toLowerCase().endsWith('.mp4') || path.toLowerCase().endsWith('.webm');
+                return isVideo === isRealVideo;
+            });
 
-            // Randomly decide if AI is on the left (0) or right (1)
+            // 3. If no match is found, try the next AI file (or end if stuck)
+            if (matchingRealFiles.length === 0) {
+                aiFiles.splice(aiIdx, 1); // Remove it since we can't pair it
+                loadRound(); 
+                return;
+            }
+
+            // 4. Pick a random matching Real file
+            const randomRealFile = matchingRealFiles[Math.floor(Math.random() * matchingRealFiles.length)];
+            const realIdx = realFiles.indexOf(randomRealFile);
+
+            // 5. Remove both from the master lists so they never repeat
+            aiFiles.splice(aiIdx, 1);
+            realFiles.splice(realIdx, 1);
+
+            // 6. Display them
             aiIndex = Math.random() > 0.5 ? 1 : 0;
-            
             document.getElementById('box' + aiIndex).innerHTML = createMediaElement(chosenAi);
-            document.getElementById('box' + (1 - aiIndex)).innerHTML = createMediaElement(chosenReal);
-            document.getElementById('message').innerText = "Which one is AI?";
+            document.getElementById('box' + (1 - aiIndex)).innerHTML = createMediaElement(randomRealFile);
+            document.getElementById('message').innerText = isVideo ? "Which video is AI?" : "Which picture is AI?";
         }
-
         function checkAnswer(clickedIndex) {
             if (clickedIndex === aiIndex) {
                 score++;
