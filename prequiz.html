@@ -12,16 +12,14 @@
         #message { font-size: 1.5rem; margin: 20px 0; color: #00d4ff; min-height: 40px; }
         .btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; background: #00d4ff; color: #1a1a1a; margin-top: 20px; }
         .hidden { display: none; }
-        #redirect-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .loader { border: 8px solid #333; border-top: 8px solid #00d4ff; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .score-display { font-size: 2rem; color: #ffcc00; margin: 20px; }
     </style>
 </head>
 <body>
 
     <div id="quiz-ui">
         <h1>Part 1: Pre-Quiz</h1>
-        <p>Score: <span id="score">0</span></p>
+        <p>Current Score: <span id="score">0</span></p>
         <div id="message">Connecting to GitHub...</div>
 
         <div class="container">
@@ -31,16 +29,16 @@
         <button id="next-btn" class="btn hidden" onclick="loadRound()">NEXT ROUND</button>
     </div>
 
-    <div id="redirect-overlay" class="hidden">
-        <div class="loader"></div>
-        <h2>Quiz Complete!</h2>
-        <p>Sending you to the training page now...</p>
+    <div id="finish-screen" class="hidden">
+        <h1>Pre-Quiz Complete!</h1>
+        <div class="score-display">You got <span id="final-score">0</span> correct!</div>
+        <p>Now, let's learn how to spot the AI every single time.</p>
+        <button class="btn" onclick="window.location.href='https://www.nerdsvers.uk/toolkittips'">VIEW TRAINING TIPS</button>
     </div>
 
     <script>
         const username = 'Connorepic3456';
         const repo = 'nerdevers';
-        const trainingURL = 'https://www.nerdsvers.uk/toolkittips'; 
 
         let aiFiles = [], realFiles = [], score = 0, aiIndex = 0, canClick = true, isLoaded = false;
 
@@ -66,9 +64,8 @@
             if (aiFiles.length === 0) {
                 localStorage.setItem('preScore', score);
                 document.getElementById('quiz-ui').classList.add('hidden');
-                document.getElementById('redirect-overlay').classList.remove('hidden');
-                // Gives the user 2.5 seconds to read the message before jumping
-                setTimeout(() => { window.location.href = trainingURL; }, 2500); 
+                document.getElementById('finish-screen').classList.remove('hidden');
+                document.getElementById('final-score').innerText = score;
                 return;
             }
             canClick = true;
@@ -110,6 +107,7 @@
             if (idx === aiIndex) score++;
             document.getElementById('score').innerText = score;
             document.getElementById('next-btn').classList.remove('hidden');
+            document.getElementById('message').innerText = (idx === aiIndex) ? "Correct! ✨" : "Incorrect! ❌";
         }
         fetchFiles();
     </script>
