@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pre-Quiz</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        .container { display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
+        .img-card { background: #333; padding: 15px; border-radius: 15px; width: 420px; }
+        .media-container { width: 400px; height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #000; border-radius: 10px; cursor: pointer; border: 4px solid transparent; transition: 0.3s; }
+        img, video { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #message { font-size: 1.5rem; margin: 20px 0; color: #00d4ff; min-height: 40px; }
+        .btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; background: #00d4ff; color: #1a1a1a; margin-top: 20px; }
+        .hidden { display: none; }
+        /* Redirect Overlay */
+        #redirect-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .loader { border: 8px solid #333; border-top: 8px solid #00d4ff; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-ui">
+        <h1>Part 1: Pre-Quiz</h1>
+        <p>Score: <span id="score">0</span></p>
+        <div id="message">Loading files...</div>
+
+        <div class="container">
+            <div class="img-card"><p>File 1</p><div class="media-container" id="box0" onclick="checkAnswer(0)"></div></div>
+            <div class="img-card"><p>File 2</p><div class="media-container" id="box1" onclick="checkAnswer(1)"></div></div>
+        </div>
+        <button id="next-btn" class="btn hidden" onclick="loadRound()">NEXT ROUND</button>
+    </div>
+
+    <div id="redirect-overlay" class="hidden">
+        <div class="loader"></div>
+        <h2>Quiz Complete!</h2>
+        <p>Sending you to the training page now...</p>
+    </div>
+
+    <script>
+        const username = 'Connorepic3456';
+        const repo = 'nerdevers';
+        const trainingURL = 'https://www.nerdsvers.uk/toolkittips';
+
+        let aiFiles = [], realFiles = [], score = 0, aiIndex = 0, canClick = true;
+
+        async function fetchFiles() {
+            const [aiRes, realRes] = await Promise.all([
+                fetch(`https://api.github.com/repos/${username}/${repo}/contents/ai`),
+                fetch(`https://api.github.com/repos/${username}/${repo}/contents/real`)
+            ]);
+            const aiData = await aiRes.json();
+            const realData = await realRes.json();
+            aiFiles = aiData.map(f => `https://raw.githubusercontent.com/${username}/${repo}/main/${f.path}`);
+            realFiles = realData.map(f => `https://raw.githubusercontent.com/${username}/${repo}/main/${f.path}`);
+            loadRound();
+        }
+
+        function loadRound() {
+            if (aiFiles.length === 0) {
+                localStorage.setItem('preScore', score);
+                document.getElementById('quiz-ui').classList.add('hidden');
+                document.getElementById('redirect-overlay').classList.remove('hidden');
+                setTimeout(() => { window.location.href = trainingURL; }, 2000);
+                return;
+            }
+            canClick = true;
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('box0').style.borderColor = document.getElementById('box1').style.borderColor = "transparent";
+
+            const aiIdx = Math.floor(Math.random() * aiFiles.length);
+            const chosenAi = aiFiles[aiIdx];
+            const isVideo = chosenAi.toLowerCase().endsWith('.mp4');
+            const matchingReal = realFiles.filter(path => path.toLowerCase().endsWith('.mp4') === isVideo);
+
+            if (matchingReal.length === 0) {
+                aiFiles.splice(aiIdx, 1);
+                loadRound();
+                return;
+            }
+
+            const chosenReal = matchingReal[Math.floor(Math.random() * matchingReal.length)];
+            const realIdx = realFiles.indexOf(chosenReal);
+            aiFiles.splice(aiIdx, 1);
+            realFiles.splice(realIdx, 1);
+
+            aiIndex = Math.random() > 0.5 ? 1 : 0;
+            document.getElementById('box' + aiIndex).innerHTML = createMedia(chosenAi);
+            document.getElementById('box' + (1 - aiIndex)).innerHTML = createMedia(chosenReal);
+            document.getElementById('message').innerText = isVideo ? "Which video is AI?" : "Which picture is AI?";
+        }
+
+        function createMedia(path) {
+            return path.toLowerCase().endsWith('.mp4') ? `<video src="${path}" autoplay loop muted playsinline></video>` : `<img src="${path}">`;
+        }
+
+        function checkAnswer(idx) {
+            if (!canClick) return;
+            canClick = false;
+            document.getElementById('box' + aiIndex).style.borderColor = "#00ff00";
+            document.getElementById('box' + (1 - aiIndex)).style.borderColor = "#ff0000";
+            if (idx === aiIndex) score++;
+            document.getElementById('score').innerText = score;
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+        fetchFiles();
+    </script>
+</body>
+</html>
