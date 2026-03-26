@@ -11,11 +11,15 @@
         img, video { max-width: 100%; max-height: 100%; object-fit: contain; }
         #message { font-size: 1.5rem; margin: 20px 0; color: #00d4ff; min-height: 40px; }
         .btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; background: #00d4ff; color: #1a1a1a; margin-top: 20px; }
+        /* Style for the test button */
+        .test-btn { background: #ff4757; color: white; padding: 10px 20px; font-size: 0.9rem; margin-bottom: 20px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
     <div id="quiz-area">
+        <button class="btn test-btn" onclick="testDatabase()">TEST DATABASE CONNECTION</button>
+        
         <h1>Part 2: Final Quiz</h1>
         <p>Current Score: <span id="score">0</span></p>
         <div id="message">Connecting to GitHub...</div>
@@ -32,6 +36,7 @@
             <p>Score <b>Before</b> Training: <span id="old-score" style="color: #ffcc00; font-weight: bold;">0</span></p>
             <p>Score <b>After</b> Training: <span id="new-score" style="color: #00ff00; font-weight: bold;">0</span></p>
             <h2 id="improvement-msg"></h2>
+            <p id="db-status" style="font-size: 0.8rem; color: #888;">Waiting for results...</p>
         </div>
         <button class="btn" onclick="window.location.href='prequiz.html'">RESTART COURSE</button>
     </div>
@@ -48,15 +53,28 @@
             messagingSenderId: "540769748987",
             appId: "1:540769748987:web:e1ea37c1b66c46390b6d5e"
         };
-        const db = getFirestore(initializeApp(firebaseConfig));
 
-        window.submitData = async (pre, post) => {
-            await addDoc(collection(db, "quiz_results"), {
-                preScore: pre,
-                postScore: post,
-                improvement: post - pre,
-                time: serverTimestamp()
-            });
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global function to submit data
+        window.submitData = async (pre, post, isTest = false) => {
+            const statusLabel = isTest ? "Test" : "Final Results";
+            console.log(`Attempting to save ${statusLabel}...`);
+            
+            try {
+                await addDoc(collection(db, "quiz_results"), {
+                    preScore: pre,
+                    postScore: post,
+                    improvement: post - pre,
+                    type: isTest ? "test_run" : "actual_run",
+                    timestamp: serverTimestamp()
+                });
+                alert(`${statusLabel} saved to Firebase!`);
+            } catch (e) {
+                console.error("Firebase Error:", e);
+                alert("Error saving to database. Check your console and Firebase rules.");
+            }
         };
     </script>
 
@@ -64,6 +82,14 @@
         const username = 'Connorepic3456';
         const repo = 'nerdevers';
         let aiFiles = [], realFiles = [], score = 0, aiIndex = 0, canClick = true, isLoaded = false;
+        let dataSubmitted = false;
+
+        // Function for the test button
+        function testDatabase() {
+            const mockPre = 5;
+            const mockPost = 10;
+            window.submitData(mockPre, mockPost, true);
+        }
 
         async function fetchFiles() {
             try {
@@ -84,6 +110,7 @@
 
         function loadRound() {
             if (!isLoaded) return;
+
             if (aiFiles.length === 0) {
                 const pre = parseInt(localStorage.getItem('preScore')) || 0;
                 document.getElementById('quiz-area').classList.add('hidden');
@@ -91,9 +118,14 @@
                 document.getElementById('old-score').innerText = pre;
                 document.getElementById('new-score').innerText = score;
                 document.getElementById('improvement-msg').innerText = score > pre ? "You Improved! 📈" : "Consistency is key! 🎯";
-                window.submitData(pre, score);
+                
+                if (!dataSubmitted) {
+                    window.submitData(pre, score);
+                    dataSubmitted = true;
+                }
                 return;
             }
+
             canClick = true;
             document.getElementById('next-btn').classList.add('hidden');
             document.getElementById('box0').style.borderColor = "transparent";
@@ -134,6 +166,7 @@
             document.getElementById('score').innerText = score;
             document.getElementById('next-btn').classList.remove('hidden');
         }
+
         fetchFiles();
     </script>
 </body>
