@@ -1,29 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Voice Reverser</title>
+<title>Voice Reverser Pro</title>
 <style>
-  body { font-family: sans-serif; padding: 20px; }
-  .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
-  button { padding: 10px; margin: 5px; cursor: pointer; }
+  body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    background-color: #f4f7f6;
+    color: #333;
+  }
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    width: 300px;
+    margin-bottom: 20px;
+  }
+  h2 { margin-top: 0; color: #555; }
+  button { 
+    padding: 12px 20px; 
+    margin: 5px; 
+    cursor: pointer; 
+    border: none;
+    border-radius: 6px;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  }
+  button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
 </style>
 </head>
 <body>
 
-<h1>Voice Recorder and Reverser</h1>
+<h1>Audio Lab</h1>
 
-<div class="box">
-  <h3>Recorder 1</h3>
+<div class="container">
+  <h2>Recorder 1</h2>
   <button onclick="startRecording(1)">Record 1</button>
   <button onclick="stopRecording(1)">Stop 1</button>
-  <button onclick="playReversed(1)">Play Reversed 1</button>
+  <button onclick="playReversed(1)">Reverse Play 1</button>
 </div>
 
-<div class="box">
-  <h3>Recorder 2</h3>
+<div class="container">
+  <h2>Recorder 2</h2>
   <button onclick="startRecording(2)">Record 2</button>
   <button onclick="stopRecording(2)">Stop 2</button>
-  <button onclick="playReversed(2)">Play Reversed 2</button>
+  <button onclick="playReversed(2)">Reverse Play 2</button>
 </div>
 
 <script>
@@ -40,10 +76,11 @@
   }
 
   function stopRecording(id) {
-    recorders[id].stop();
+    if (recorders[id]) recorders[id].stop();
   }
 
   async function playReversed(id) {
+    if (audioChunks[id].length === 0) return;
     const blob = new Blob(audioChunks[id], { type: 'audio/ogg; codecs=opus' });
     const arrayBuffer = await blob.arrayBuffer();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
