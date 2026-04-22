@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Voice Reverser</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
+  button { padding: 10px; margin: 5px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h1>Voice Recorder and Reverser</h1>
+
+<div class="box">
+  <h3>Recorder 1</h3>
+  <button onclick="startRecording(1)">Record 1</button>
+  <button onclick="stopRecording(1)">Stop 1</button>
+  <button onclick="playReversed(1)">Play Reversed 1</button>
+</div>
+
+<div class="box">
+  <h3>Recorder 2</h3>
+  <button onclick="startRecording(2)">Record 2</button>
+  <button onclick="stopRecording(2)">Stop 2</button>
+  <button onclick="playReversed(2)">Play Reversed 2</button>
+</div>
+
+<script>
+  let recorders = {};
+  let audioChunks = { 1: [], 2: [] };
+  let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  async function startRecording(id) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recorders[id] = new MediaRecorder(stream);
+    audioChunks[id] = [];
+    recorders[id].ondataavailable = e => audioChunks[id].push(e.data);
+    recorders[id].start();
+  }
+
+  function stopRecording(id) {
+    recorders[id].stop();
+  }
+
+  async function playReversed(id) {
+    const blob = new Blob(audioChunks[id], { type: 'audio/ogg; codecs=opus' });
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    const reversedBuffer = audioContext.createBuffer(
+      audioBuffer.numberOfChannels, 
+      audioBuffer.length, 
+      audioBuffer.sampleRate
+    );
+
+    for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+      const channelData = audioBuffer.getChannelData(i);
+      const reversedChannelData = reversedBuffer.getChannelData(i);
+      for (let j = 0; j < channelData.length; j++) {
+        reversedChannelData[j] = channelData[channelData.length - 1 - j];
+      }
+    }
+
+    const source = audioContext.createBufferSource();
+    source.buffer = reversedBuffer;
+    source.connect(audioContext.destination);
+    source.start();
+  }
+</script>
+</body>
+</html>
