@@ -11,15 +11,17 @@
         img, video { max-width: 100%; max-height: 100%; object-fit: contain; }
         #message { font-size: 1.5rem; margin: 20px 0; color: #00d4ff; min-height: 40px; }
         .btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; background: #00d4ff; color: #1a1a1a; margin-top: 20px; }
-        /* Style for the test button */
-        .test-btn { background: #ff4757; color: white; padding: 10px 20px; font-size: 0.9rem; margin-bottom: 20px; }
         .hidden { display: none; }
+        
+        /* Styles for the feedback form */
+        .feedback-box { margin-top: 20px; text-align: left; }
+        .feedback-box label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.95rem; }
+        .feedback-box textarea, .feedback-box select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #555; background: #222; color: white; box-sizing: border-box; font-family: inherit; }
+        .feedback-box textarea { height: 70px; resize: vertical; }
     </style>
 </head>
 <body>
     <div id="quiz-area">
-        <button class="btn test-btn" onclick="testDatabase()">TEST DATABASE CONNECTION</button>
-        
         <h1>Part 2: Final Quiz</h1>
         <p>Current Score: <span id="score">0</span></p>
         <div id="message">Connecting to GitHub...</div>
@@ -36,60 +38,36 @@
             <p>Score <b>Before</b> Training: <span id="old-score" style="color: #ffcc00; font-weight: bold;">0</span></p>
             <p>Score <b>After</b> Training: <span id="new-score" style="color: #00ff00; font-weight: bold;">0</span></p>
             <h2 id="improvement-msg"></h2>
-            <p id="db-status" style="font-size: 0.8rem; color: #888;">Waiting for results...</p>
+            
+            <!-- Feedback Form -->
+            <div id="feedback-section" class="feedback-box">
+                <h3>Training Feedback</h3>
+                
+                <label for="feelings">How do you feel about the training?</label>
+                <textarea id="feelings" placeholder="Share your thoughts here..."></textarea>
+                
+                <label for="learned">Do you think you learned something?</label>
+                <select id="learned">
+                    <option value="" disabled selected>Select an option...</option>
+                    <option value="Yes, a lot">Yes, a lot</option>
+                    <option value="Yes, a little">Yes, a little</option>
+                    <option value="Not really">Not really</option>
+                    <option value="No, not at all">No, not at all</option>
+                </select>
+
+                <button class="btn" style="width: 100%; margin-top: 15px;" onclick="sendFeedbackToEmail()">SEND FEEDBACK TO ME</button>
+            </div>
+
+            <p id="email-status" style="font-size: 0.8rem; color: #888; margin-top: 15px;">Please submit your feedback above.</p>
         </div>
         <button class="btn" onclick="window.location.href='prequiz.html'">RESTART COURSE</button>
     </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyA7_nsBL0hBKujwWup8q3wWS9hEID3s5vw",
-            authDomain: "digital-tool-kit.firebaseapp.com",
-            projectId: "digital-tool-kit",
-            storageBucket: "digital-tool-kit.firebasestorage.app",
-            messagingSenderId: "540769748987",
-            appId: "1:540769748987:web:e1ea37c1b66c46390b6d5e"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Global function to submit data
-        window.submitData = async (pre, post, isTest = false) => {
-            const statusLabel = isTest ? "Test" : "Final Results";
-            console.log(`Attempting to save ${statusLabel}...`);
-            
-            try {
-                await addDoc(collection(db, "quiz_results"), {
-                    preScore: pre,
-                    postScore: post,
-                    improvement: post - pre,
-                    type: isTest ? "test_run" : "actual_run",
-                    timestamp: serverTimestamp()
-                });
-                alert(`${statusLabel} saved to Firebase!`);
-            } catch (e) {
-                console.error("Firebase Error:", e);
-                alert("Error saving to database. Check your console and Firebase rules.");
-            }
-        };
-    </script>
 
     <script>
         const username = 'Connorepic3456';
         const repo = 'nerdevers';
         let aiFiles = [], realFiles = [], score = 0, aiIndex = 0, canClick = true, isLoaded = false;
         let dataSubmitted = false;
-
-        // Function for the test button
-        function testDatabase() {
-            const mockPre = 5;
-            const mockPost = 10;
-            window.submitData(mockPre, mockPost, true);
-        }
 
         async function fetchFiles() {
             try {
@@ -118,11 +96,6 @@
                 document.getElementById('old-score').innerText = pre;
                 document.getElementById('new-score').innerText = score;
                 document.getElementById('improvement-msg').innerText = score > pre ? "You Improved! 📈" : "Consistency is key! 🎯";
-                
-                if (!dataSubmitted) {
-                    window.submitData(pre, score);
-                    dataSubmitted = true;
-                }
                 return;
             }
 
@@ -165,6 +138,59 @@
             if (idx === aiIndex) score++;
             document.getElementById('score').innerText = score;
             document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        async function sendFeedbackToEmail() {
+            if (dataSubmitted) {
+                alert("Feedback has already been sent!");
+                return;
+            }
+
+            const pre = parseInt(localStorage.getItem('preScore')) || 0;
+            const feelings = document.getElementById('feelings').value;
+            const learned = document.getElementById('learned').value;
+
+            if (!learned) {
+                alert("Please select whether you think you learned something.");
+                return;
+            }
+
+            document.getElementById('email-status').innerText = "Sending email...";
+
+            try {
+                const response = await fetch("https://api.web3forms.com/submit", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        access_key: "5bcb1b2a-f05b-4d92-8cc8-44e7648dd480", // <-- PUT YOUR WEB3FORMS KEY HERE
+                        subject: "New Quiz Feedback Submission",
+                        preScore: pre,
+                        postScore: score,
+                        improvement: score - pre,
+                        feelingsAboutTraining: feelings,
+                        learnedSomething: learned
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert("Feedback sent successfully to your email!");
+                    document.getElementById('email-status').innerText = "Feedback sent!";
+                    dataSubmitted = true;
+                    document.getElementById('feedback-section').style.opacity = '0.5';
+                } else {
+                    document.getElementById('email-status').innerText = "Failed to send feedback.";
+                    alert("There was an error sending the email. Check your Access Key.");
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('email-status').innerText = "Error sending email.";
+                alert("An error occurred while sending the email.");
+            }
         }
 
         fetchFiles();
