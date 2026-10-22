@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N.E.R.D.S. Focus & Study Command Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0a0d14',
+                            card: '#121824',
+                            border: '#1f293d',
+                            accent: '#00f0ff',
+                            secondary: '#7000ff',
+                            success: '#00ff88',
+                            warning: '#ffb700',
+                            danger: '#ff0055',
+                            text: '#e2e8f0',
+                            muted: '#64748b'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0d14;
+            color: #e2e8f0;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom Glowing & Neon Effects */
+        .neon-glow-accent {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
+        }
+        .neon-glow-accent:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.45);
+        }
+        .neon-glow-purple {
+            box-shadow: 0 0 15px rgba(112, 0, 255, 0.25);
+        }
+        .neon-border-accent {
+            border-color: rgba(0, 240, 255, 0.5);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0d14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f293d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+        /* Glassmorphic Cards */
+        .glass-card {
+            background: rgba(18, 24, 36, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(31, 41, 61, 0.8);
+        }
+        /* Range input custom styling */
+        input[type=range] {
+            accent-color: #00f0ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyber-accent selection:text-black">
+
+    <!-- Header / Command Bar -->
+    <header class="border-b border-cyber-border bg-cyber-card/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyber-accent to-cyber-secondary flex items-center justify-center font-mono font-bold text-black text-xl shadow-lg shadow-cyber-accent/20">
+                    N
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wider text-white font-mono flex items-center gap-2">
+                        N.E.R.D.S. <span class="text-xs px-2 py-0.5 rounded bg-cyber-accent/10 text-cyber-accent border border-cyber-accent/30 font-sans uppercase tracking-normal">COMMAND CENTER</span>
+                    </h1>
+                    <p class="text-xs text-cyber-muted hidden sm:block">Neural Efficiency & Focus System</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <!-- System Status Indicator -->
+                <div class="hidden md:flex items-center space-x-2 text-xs font-mono px-3 py-1.5 rounded-full bg-cyber-bg border border-cyber-border">
+                    <span id="statusDot" class="w-2 h-2 rounded-full bg-cyber-success animate-pulse"></span>
+                    <span id="statusText" class="text-cyber-muted">SYSTEM READY</span>
+                </div>
+                
+                <!-- Reset Data Button -->
+                <button id="resetAppBtn" title="Reset All Device Data" class="p-2 text-cyber-muted hover:text-cyber-danger transition-colors rounded-lg hover:bg-cyber-border/50 text-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span class="text-xs hidden sm:inline">Reset</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Body -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: Timer & Audio Generator (5 Cols) -->
+        <section class="lg:col-span-5 space-y-6 flex flex-col">
+            
+            <!-- TIMER CARD -->
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden flex flex-col items-center">
+                <div class="w-full flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-mono font-semibold tracking-wider text-cyber-accent uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch"></i> Focus Chronometer
+                    </h2>
+                    <span id="timerPhase" class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyber-secondary/20 text-cyber-secondary border border-cyber-secondary/40">
+                        DEEP FOCUS
+                    </span>
+                </div>
+
+                <!-- Timer Circular Display -->
+                <div class="relative w-64 h-64 sm:w-72 sm:h-72 my-2 flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        <!-- Background Ring -->
+                        <circle cx="50" cy="50" r="44" stroke="#1f293d" stroke-width="4" fill="transparent" />
+                        <!-- Progress Ring -->
+                        <circle id="progressRing" cx="50" cy="50" r="44" stroke="#00f0ff" stroke-width="4" fill="transparent"
+                                stroke-dasharray="276.46" stroke-dashoffset="0" stroke-linecap="round"
+                                class="transition-all duration-300 ease-linear" />
+                    </svg>
+
+                    <!-- Time & Mode Text inside circle -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <div id="timeDisplay" class="text-5xl sm:text-6xl font-bold font-mono text-white tracking-tight">
+                            25:00
+                        </div>
+                        <div id="timerGoalLabel" class="text-xs text-cyber-muted font-mono mt-2">
+                            Session Target: <span id="targetDurationText" class="text-cyber-text font-semibold">25 min</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Controls -->
+                <div class="flex items-center space-x-4 my-4 w-full justify-center">
+                    <button id="startPauseBtn" class="px-8 py-3 rounded-xl bg-cyber-accent text-black font-semibold font-mono hover:bg-cyan-300 transition-all neon-glow-accent flex items-center gap-2">
+                        <i class="fa-solid fa-play text-sm" id="playIcon"></i>
+                        <span id="startPauseText">START</span>
+                    </button>
+                    <button id="resetTimerBtn" class="p-3 rounded-xl bg-cyber-border/60 hover:bg-cyber-border text-cyber-text transition-all font-mono border border-cyber-border" title="Reset Timer">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+
+                <!-- Duration Presets Section -->
+                <div class="w-full mt-4 pt-4 border-t border-cyber-border/60">
+                    <div class="text-xs font-mono text-cyber-muted mb-2.5 flex justify-between items-center">
+                        <span>PRESET DURATIONS</span>
+                        <span class="text-[10px] text-cyber-muted/80">Click to load</span>
+                    </div>
+                    <!-- Presets Grid -->
+                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2" id="presetButtonsContainer">
+                        <!-- Presets generated dynamically via JS for precision: 1m, 2m, 5m, 10m, 15m, 20m, 25m, 30m, 45m, 1h, 1.5h -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- AMBIENT NOISE GENERATORS -->
+            <div class="glass-card rounded-2xl p-6 flex-grow flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-mono font-semibold tracking-wider text-cyber-accent uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-sliders"></i> Ambient Audio Matrix
+                    </h2>
+                    <span class="text-[10px] font-mono text-cyber-muted">WebAudio Synthesizer</span>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Track 1: Lo-Fi Ambient Tone -->
+                    <div class="p-3.5 rounded-xl bg-cyber-bg/60 border border-cyber-border/60 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <button id="toggleLofiBtn" class="w-8 h-8 rounded-lg bg-cyber-border flex items-center justify-center text-cyber-muted hover:text-cyber-accent transition-colors">
+                                    <i class="fa-solid fa-play text-xs"></i>
+                                </button>
+                                <div>
+                                    <div class="text-sm font-semibold text-white">Lo-Fi Synth Tone</div>
+                                    <div class="text-[11px] text-cyber-muted">Warm dual-oscillator drone</div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-music text-cyber-secondary/50 text-sm"></i>
+                        </div>
+                        <div class="flex items-center space-x-3 pt-1">
+                            <i class="fa-solid fa-volume-low text-xs text-cyber-muted"></i>
+                            <input id="lofiVol" type="range" min="0" max="1" step="0.01" value="0.3" class="w-full h-1.5 bg-cyber-border rounded-lg appearance-none cursor-pointer">
+                            <i class="fa-solid fa-volume-high text-xs text-cyber-muted"></i>
+                        </div>
+                    </div>
+
+                    <!-- Track 2: Cooling Fan Noise -->
+                    <div class="p-3.5 rounded-xl bg-cyber-bg/60 border border-cyber-border/60 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <button id="toggleFanBtn" class="w-8 h-8 rounded-lg bg-cyber-border flex items-center justify-center text-cyber-muted hover:text-cyber-accent transition-colors">
+                                    <i class="fa-solid fa-play text-xs"></i>
+                                </button>
+                                <div>
+                                    <div class="text-sm font-semibold text-white">Cooling Fan Noise</div>
+                                    <div class="text-[11px] text-cyber-muted">Low-pass filtered airflow hum</div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-fan text-cyber-accent/50 text-sm"></i>
+                        </div>
+                        <div class="flex items-center space-x-3 pt-1">
+                            <i class="fa-solid fa-volume-low text-xs text-cyber-muted"></i>
+                            <input id="fanVol" type="range" min="0" max="1" step="0.01" value="0.4" class="w-full h-1.5 bg-cyber-border rounded-lg appearance-none cursor-pointer">
+                            <i class="fa-solid fa-volume-high text-xs text-cyber-muted"></i>
+                        </div>
+                    </div>
+
+                    <!-- Track 3: White Noise -->
+                    <div class="p-3.5 rounded-xl bg-cyber-bg/60 border border-cyber-border/60 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <button id="toggleWhiteBtn" class="w-8 h-8 rounded-lg bg-cyber-border flex items-center justify-center text-cyber-muted hover:text-cyber-accent transition-colors">
+                                    <i class="fa-solid fa-play text-xs"></i>
+                                </button>
+                                <div>
+                                    <div class="text-sm font-semibold text-white">Pure White Noise</div>
+                                    <div class="text-[11px] text-cyber-muted">Full frequency sound mask</div>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-wave-square text-cyber-success/50 text-sm"></i>
+                        </div>
+                        <div class="flex items-center space-x-3 pt-1">
+                            <i class="fa-solid fa-volume-low text-xs text-cyber-muted"></i>
+                            <input id="whiteVol" type="range" min="0" max="1" step="0.01" value="0.2" class="w-full h-1.5 bg-cyber-border rounded-lg appearance-none cursor-pointer">
+                            <i class="fa-solid fa-volume-high text-xs text-cyber-muted"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN: Task Board, Schedule & Dashboard Metrics (7 Cols) -->
+        <section class="lg:col-span-7 space-y-6 flex flex-col">
+
+            <!-- STATS & SUMMARY DASHBOARD -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <!-- Stat 1: Completed Tasks -->
+                <div class="glass-card rounded-xl p-4 flex items-center space-x-3">
+                    <div class="relative w-12 h-12 flex-shrink-0">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1f293d" stroke-width="3" />
+                            <path id="taskProgressCircle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#00ff88" stroke-width="3" stroke-dasharray="0, 100" class="transition-all duration-500" />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-[10px] font-mono font-bold text-cyber-success" id="taskPercentText">0%</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-cyber-muted font-mono">TASKS DONE</div>
+                        <div class="text-lg font-bold text-white font-mono" id="taskStatRatio">0/0</div>
+                    </div>
+                </div>
+
+                <!-- Stat 2: Total Focus Time Completed -->
+                <div class="glass-card rounded-xl p-4 flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-cyber-accent/10 border border-cyber-accent/30 text-cyber-accent flex items-center justify-center font-mono text-base">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-cyber-muted font-mono">TOTAL FOCUS</div>
+                        <div class="text-lg font-bold text-white font-mono" id="totalFocusTimeDisplay">0m</div>
+                    </div>
+                </div>
+
+                <!-- Stat 3: Active Streak / Efficiency -->
+                <div class="glass-card rounded-xl p-4 sm:col-span-1 col-span-2 flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-cyber-secondary/10 border border-cyber-secondary/30 text-cyber-secondary flex items-center justify-center font-mono text-base">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-cyber-muted font-mono">EFFICIENCY</div>
+                        <div class="text-lg font-bold text-white font-mono" id="efficiencyDisplay">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TASK BOARD & TIME BLOCKING SCHEDULER -->
+            <div class="glass-card rounded-2xl p-6 flex-grow flex flex-col">
+                <!-- Header / Filter Tabs -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 pb-4 border-b border-cyber-border">
+                    <h2 class="text-sm font-mono font-semibold tracking-wider text-cyber-accent uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-list-check"></i> Task Board & Time Blocks
+                    </h2>
+                    <!-- Category Filters -->
+                    <div class="flex space-x-1 bg-cyber-bg p-1 rounded-lg border border-cyber-border text-xs font-mono">
+                        <button id="filterAll" class="px-3 py-1 rounded-md bg-cyber-border text-white transition-all">ALL</button>
+                        <button id="filterPending" class="px-3 py-1 rounded-md text-cyber-muted hover:text-white transition-all">PENDING</button>
+                        <button id="filterCompleted" class="px-3 py-1 rounded-md text-cyber-muted hover:text-white transition-all">DONE</button>
+                    </div>
+                </div>
+
+                <!-- Input Field to Add New Task -->
+                <form id="addTaskForm" class="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-6">
+                    <input type="text" id="taskTitleInput" placeholder="Task description..." required class="sm:col-span-6 bg-cyber-bg border border-cyber-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-cyber-muted focus:outline-none focus:border-cyber-accent transition-colors">
+                    
+                    <select id="taskTimeBlockInput" class="sm:col-span-4 bg-cyber-bg border border-cyber-border rounded-xl px-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-cyber-accent transition-colors">
+                        <option value="08:00 - 09:00">08:00 - 09:00 Block</option>
+                        <option value="09:00 - 10:00">09:00 - 10:00 Block</option>
+                        <option value="10:00 - 11:00">10:00 - 11:00 Block</option>
+                        <option value="11:00 - 12:00">11:00 - 12:00 Block</option>
+                        <option value="12:00 - 13:00">12:00 - 13:00 Block</option>
+                        <option value="13:00 - 14:00">13:00 - 14:00 Block</option>
+                        <option value="14:00 - 15:00">14:00 - 15:00 Block</option>
+                        <option value="15:00 - 16:00">15:00 - 16:00 Block</option>
+                        <option value="16:00 - 17:00">16:00 - 17:00 Block</option>
+                        <option value="17:00 - 18:00">17:00 - 18:00 Block</option>
+                        <option value="18:00 - 20:00">18:00 - 20:00 Block</option>
+                        <option value="20:00 - 22:00">20:00 - 22:00 Block</option>
+                    </select>
+
+                    <button type="submit" class="sm:col-span-2 bg-cyber-accent text-black font-semibold rounded-xl px-4 py-2.5 text-xs font-mono hover:bg-cyan-300 transition-colors flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-plus"></i> ADD
+                    </button>
+                </form>
+
+                <!-- Task List Container -->
+                <div class="flex-grow space-y-3 overflow-y-auto max-h-[380px] pr-1" id="taskListContainer">
+                    <!-- Tasks will be rendered dynamically here -->
+                </div>
+
+                <!-- Empty State Message -->
+                <div id="emptyTaskList" class="hidden flex-col items-center justify-center py-12 text-center text-cyber-muted">
+                    <i class="fa-solid fa-clipboard-list text-4xl mb-3 text-cyber-border"></i>
+                    <p class="text-sm font-mono">No tasks found for your workspace.</p>
+                    <p class="text-xs text-cyber-muted/70 mt-1">Add a new task above to start scheduling your focus session.</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-cyber-border/60 bg-cyber-bg py-4 text-center text-xs font-mono text-cyber-muted">
+        <p>N.E.R.D.S. COMMAND CENTER &bull; DEVICE LOCAL PERSISTENCE ACTIVE</p>
+    </footer>
+
+    <!-- Custom Modal for Editing Tasks -->
+    <div id="editTaskModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-md mx-4 border border-cyber-accent/40">
+            <h3 class="text-sm font-mono font-bold text-cyber-accent mb-4 uppercase">Edit Task & Time Block</h3>
+            <input type="text" id="editTaskTitle" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-4 py-2.5 text-sm text-white mb-3 focus:outline-none focus:border-cyber-accent">
+            <select id="editTaskTimeBlock" class="w-full bg-cyber-bg border border-cyber-border rounded-xl px-3 py-2.5 text-xs font-mono text-white mb-5 focus:outline-none focus:border-cyber-accent">
+                <option value="08:00 - 09:00">08:00 - 09:00 Block</option>
+                <option value="09:00 - 10:00">09:00 - 10:00 Block</option>
+                <option value="10:00 - 11:00">10:00 - 11:00 Block</option>
+                <option value="11:00 - 12:00">11:00 - 12:00 Block</option>
+                <option value="12:00 - 13:00">12:00 - 13:00 Block</option>
+                <option value="13:00 - 14:00">13:00 - 14:00 Block</option>
+                <option value="14:00 - 15:00">14:00 - 15:00 Block</option>
+                <option value="15:00 - 16:00">15:00 - 16:00 Block</option>
+                <option value="16:00 - 17:00">16:00 - 17:00 Block</option>
+                <option value="17:00 - 18:00">17:00 - 18:00 Block</option>
+                <option value="18:00 - 20:00">18:00 - 20:00 Block</option>
+                <option value="20:00 - 22:00">20:00 - 22:00 Block</option>
+            </select>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelEditBtn" class="px-4 py-2 rounded-xl bg-cyber-border text-xs font-mono text-cyber-muted hover:text-white">Cancel</button>
+                <button id="saveEditBtn" class="px-4 py-2 rounded-xl bg-cyber-accent text-black font-semibold text-xs font-mono hover:bg-cyan-300">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Sound Synthesizer & Application Logic -->
+    <script>
+        // --- 1. LOCAL STORAGE & DATA INITIALIZATION ---
+        const STORAGE_KEY = 'NERDS_FOCUS_COMMAND_CENTER_DATA_V1';
+
+        let appData = {
+            tasks: [], // Starts completely empty as requested
+            totalFocusSeconds: 0,
+            activeFilter: 'ALL'
+        };
+
+        function loadAppData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    appData = { ...appData, ...parsed };
+                } catch (e) {
+                    console.error("Failed to parse saved state", e);
+                }
+            }
+        }
+
+        function saveAppData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            updateMetrics();
+        }
+
+        // --- 2. TIMER STATE & PRESETS ---
+        // Duration Presets required: 1 min, 2 min, 5 min, 10 min, 15 min, 20 min, 25 min, 30 min, 45 min, 1 hour (60 min), 1.5 hours (90 min)
+        const PRESETS = [
+            { label: '1m', minutes: 1 },
+            { label: '2m', minutes: 2 },
+            { label: '5m', minutes: 5 },
+            { label: '10m', minutes: 10 },
+            { label: '15m', minutes: 15 },
+            { label: '20m', minutes: 20 },
+            { label: '25m', minutes: 25 },
+            { label: '30m', minutes: 30 },
+            { label: '45m', minutes: 45 },
+            { label: '1h', minutes: 60 },
+            { label: '1.5h', minutes: 90 }
+        ];
+
+        let targetMinutes = 25;
+        let totalSeconds = targetMinutes * 60;
+        let secondsRemaining = totalSeconds;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // DOM References for Timer
+        const timeDisplay = document.getElementById('timeDisplay');
+        const progressRing = document.getElementById('progressRing');
+        const startPauseBtn = document.getElementById('startPauseBtn');
+        const startPauseText = document.getElementById('startPauseText');
+        const playIcon = document.getElementById('playIcon');
+        const resetTimerBtn = document.getElementById('resetTimerBtn');
+        const targetDurationText = document.getElementById('targetDurationText');
+        const presetButtonsContainer = document.getElementById('presetButtonsContainer');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        const RING_CIRCUMFERENCE = 2 * Math.PI * 44; // r = 44
+
+        function renderPresetButtons() {
+            presetButtonsContainer.innerHTML = '';
+            PRESETS.forEach(preset => {
+                const btn = document.createElement('button');
+                const isActive = preset.minutes === targetMinutes;
+                btn.className = `py-1.5 px-2 text-xs font-mono rounded-lg transition-all border ${
+                    isActive 
+                        ? 'bg-cyber-accent text-black font-bold border-cyber-accent' 
+                        : 'bg-cyber-bg text-cyber-muted border-cyber-border hover:border-cyber-accent/50 hover:text-white'
+                }`;
+                btn.innerText = preset.label;
+                btn.onclick = () => selectPreset(preset.minutes);
+                presetButtonsContainer.appendChild(btn);
+            });
+        }
+
+        function selectPreset(minutes) {
+            pauseTimer();
+            targetMinutes = minutes;
+            totalSeconds = targetMinutes * 60;
+            secondsRemaining = totalSeconds;
+            targetDurationText.innerText = minutes >= 60 ? `${minutes / 60} hour(s)` : `${minutes} min`;
+            updateTimerDisplay();
+            renderPresetButtons();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(secondsRemaining / 60);
+            const secs = secondsRemaining % 60;
+            timeDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            // Update Circle Ring Progress
+            const fraction = secondsRemaining / totalSeconds;
+            const offset = RING_CIRCUMFERENCE * (1 - fraction);
+            progressRing.style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (secondsRemaining <= 0) return;
+            isTimerRunning = true;
+            startPauseText.innerText = "PAUSE";
+            playIcon.className = "fa-solid fa-pause text-sm";
+            startPauseBtn.classList.replace('bg-cyber-accent', 'bg-cyber-warning');
+
+            statusDot.className = "w-2 h-2 rounded-full bg-cyber-accent animate-ping";
+            statusText.innerText = "FOCUSING";
+            statusText.className = "text-cyber-accent font-semibold";
+
+            timerInterval = setInterval(() => {
+                secondsRemaining--;
+                appData.totalFocusSeconds++;
+                saveAppData();
+                updateTimerDisplay();
+
+                if (secondsRemaining <= 0) {
+                    pauseTimer();
+                    triggerTimerAlarm();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            startPauseText.innerText = "START";
+            playIcon.className = "fa-solid fa-play text-sm";
+            startPauseBtn.classList.replace('bg-cyber-warning', 'bg-cyber-accent');
+
+            statusDot.className = "w-2 h-2 rounded-full bg-cyber-success animate-pulse";
+            statusText.innerText = "SYSTEM READY";
+            statusText.className = "text-cyber-muted";
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            secondsRemaining = totalSeconds;
+            updateTimerDisplay();
+        }
+
+        // --- 3. AUDIO SYNTHESIZER (WEB AUDIO API) ---
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Timer Alarm Chime Synthesizer
+        function triggerTimerAlarm() {
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                // Simple Cyber Pulse Alarm Chime
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, index) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.15);
+
+                    gain.gain.setValueAtTime(0, now + index * 0.15);
+                    gain.gain.linearRampToValueAtTime(0.3, now + index * 0.15 + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.15 + 0.6);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(now + index * 0.15);
+                    osc.stop(now + index * 0.15 + 0.6);
+                });
+            } catch (e) {
+                console.error("Audio error", e);
+            }
+        }
+
+        // NOISE GENERATOR MODULES
+        // Track 1: Lo-Fi Ambient Tone
+        let lofiNodes = null;
+        let isLofiPlaying = false;
+
+        function toggleLofi() {
+            const ctx = getAudioContext();
+            const btn = document.getElementById('toggleLofiBtn');
+            const volSlider = document.getElementById('lofiVol');
+
+            if (!isLofiPlaying) {
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(110, ctx.currentTime); // A2 tone
+
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(164.81, ctx.currentTime); // E3 tone
+
+                gain.gain.setValueAtTime(parseFloat(volSlider.value), ctx.currentTime);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc1.start();
+                osc2.start();
+
+                lofiNodes = { osc1, osc2, gain };
+                isLofiPlaying = true;
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                btn.classList.add('bg-cyber-secondary', 'text-white');
+            } else {
+                if (lofiNodes) {
+                    lofiNodes.osc1.stop();
+                    lofiNodes.osc2.stop();
+                    lofiNodes = null;
+                }
+                isLofiPlaying = false;
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                btn.classList.remove('bg-cyber-secondary', 'text-white');
+            }
+        }
+
+        document.getElementById('lofiVol').addEventListener('input', (e) => {
+            if (lofiNodes) {
+                lofiNodes.gain.gain.setValueAtTime(parseFloat(e.target.value), audioCtx.currentTime);
+            }
+        });
+
+        // Track 2: Fan Noise (Filtered Noise)
+        let fanNodes = null;
+        let isFanPlaying = false;
+
+        function toggleFan() {
+            const ctx = getAudioContext();
+            const btn = document.getElementById('toggleFanBtn');
+            const volSlider = document.getElementById('fanVol');
+
+            if (!isFanPlaying) {
+                const bufferSize = ctx.sampleRate * 2;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                const whiteNoise = ctx.createBufferSource();
+                whiteNoise.buffer = buffer;
+                whiteNoise.loop = true;
+
+                // Filter for fan sound
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(400, ctx.currentTime);
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(parseFloat(volSlider.value), ctx.currentTime);
+
+                whiteNoise.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+
+                whiteNoise.start();
+
+                fanNodes = { whiteNoise, gain };
+                isFanPlaying = true;
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                btn.classList.add('bg-cyber-accent', 'text-black');
+            } else {
+                if (fanNodes) {
+                    fanNodes.whiteNoise.stop();
+                    fanNodes = null;
+                }
+                isFanPlaying = false;
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                btn.classList.remove('bg-cyber-accent', 'text-black');
+            }
+        }
+
+        document.getElementById('fanVol').addEventListener('input', (e) => {
+            if (fanNodes) {
+                fanNodes.gain.gain.setValueAtTime(parseFloat(e.target.value), audioCtx.currentTime);
+            }
+        });
+
+        // Track 3: White Noise
+        let whiteNodes = null;
+        let isWhitePlaying = false;
+
+        function toggleWhite() {
+            const ctx = getAudioContext();
+            const btn = document.getElementById('toggleWhiteBtn');
+            const volSlider = document.getElementById('whiteVol');
+
+            if (!isWhitePlaying) {
+                const bufferSize = ctx.sampleRate * 2;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                noise.loop = true;
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(parseFloat(volSlider.value), ctx.currentTime);
+
+                noise.connect(gain);
+                gain.connect(ctx.destination);
+
+                noise.start();
+
+                whiteNodes = { noise, gain };
+                isWhitePlaying = true;
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                btn.classList.add('bg-cyber-success', 'text-black');
+            } else {
+                if (whiteNodes) {
+                    whiteNodes.noise.stop();
+                    whiteNodes = null;
+                }
+                isWhitePlaying = false;
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                btn.classList.remove('bg-cyber-success', 'text-black');
+            }
+        }
+
+        document.getElementById('whiteVol').addEventListener('input', (e) => {
+            if (whiteNodes) {
+                whiteNodes.gain.gain.setValueAtTime(parseFloat(e.target.value), audioCtx.currentTime);
+            }
+        });
+
+        // Event listeners for noise buttons
+        document.getElementById('toggleLofiBtn').addEventListener('click', toggleLofi);
+        document.getElementById('toggleFanBtn').addEventListener('click', toggleFan);
+        document.getElementById('toggleWhiteBtn').addEventListener('click', toggleWhite);
+
+        // --- 4. TASK MANAGEMENT & TIME BLOCKING ---
+        const taskListContainer = document.getElementById('taskListContainer');
+        const emptyTaskList = document.getElementById('emptyTaskList');
+        const addTaskForm = document.getElementById('addTaskForm');
+        const taskTitleInput = document.getElementById('taskTitleInput');
+        const taskTimeBlockInput = document.getElementById('taskTimeBlockInput');
+
+        let editingTaskId = null;
+
+        function renderTasks() {
+            taskListContainer.innerHTML = '';
+
+            const filteredTasks = appData.tasks.filter(task => {
+                if (appData.activeFilter === 'PENDING') return !task.completed;
+                if (appData.activeFilter === 'COMPLETED') return task.completed;
+                return true;
+            });
+
+            if (filteredTasks.length === 0) {
+                emptyTaskList.classList.remove('hidden');
+                emptyTaskList.classList.add('flex');
+            } else {
+                emptyTaskList.classList.add('hidden');
+                emptyTaskList.classList.remove('flex');
+
+                filteredTasks.forEach(task => {
+                    const item = document.createElement('div');
+                    item.className = `p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                        task.completed 
+                            ? 'bg-cyber-bg/40 border-cyber-border/40 opacity-70' 
+                            : 'bg-cyber-bg/80 border-cyber-border hover:border-cyber-accent/40'
+                    }`;
+
+                    item.innerHTML = `
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <button onclick="toggleTaskComplete('${task.id}')" class="w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                task.completed 
+                                    ? 'bg-cyber-success border-cyber-success text-black' 
+                                    : 'border-cyber-muted hover:border-cyber-accent'
+                            }">
+                                ${task.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+                            </button>
+                            <div class="overflow-hidden">
+                                <div class="text-sm font-medium ${task.completed ? 'line-through text-cyber-muted' : 'text-white'} truncate">
+                                    ${escapeHtml(task.title)}
+                                </div>
+                                <div class="text-[10px] font-mono text-cyber-accent flex items-center gap-1.5 mt-0.5">
+                                    <i class="fa-regular fa-clock"></i> ${task.timeBlock}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <button onclick="openEditModal('${task.id}')" class="p-1.5 text-cyber-muted hover:text-cyber-accent transition-colors rounded-lg">
+                                <i class="fa-regular fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button onclick="deleteTask('${task.id}')" class="p-1.5 text-cyber-muted hover:text-cyber-danger transition-colors rounded-lg">
+                                <i class="fa-regular fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    taskListContainer.appendChild(item);
+                });
+            }
+
+            updateMetrics();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        function addTask(title, timeBlock) {
+            const newTask = {
+                id: 'task_' + Date.now(),
+                title,
+                timeBlock,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            appData.tasks.unshift(newTask);
+            saveAppData();
+            renderTasks();
+        }
+
+        function toggleTaskComplete(id) {
+            const task = appData.tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveAppData();
+                renderTasks();
+            }
+        }
+
+        function deleteTask(id) {
+            appData.tasks = appData.tasks.filter(t => t.id !== id);
+            saveAppData();
+            renderTasks();
+        }
+
+        // Edit Modal Handlers
+        const editTaskModal = document.getElementById('editTaskModal');
+        const editTaskTitle = document.getElementById('editTaskTitle');
+        const editTaskTimeBlock = document.getElementById('editTaskTimeBlock');
+
+        function openEditModal(id) {
+            const task = appData.tasks.find(t => t.id === id);
+            if (task) {
+                editingTaskId = id;
+                editTaskTitle.value = task.title;
+                editTaskTimeBlock.value = task.timeBlock;
+                editTaskModal.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('cancelEditBtn').onclick = () => {
+            editTaskModal.classList.add('hidden');
+            editingTaskId = null;
+        };
+
+        document.getElementById('saveEditBtn').onclick = () => {
+            if (editingTaskId) {
+                const task = appData.tasks.find(t => t.id === editingTaskId);
+                if (task) {
+                    task.title = editTaskTitle.value.trim() || task.title;
+                    task.timeBlock = editTaskTimeBlock.value;
+                    saveAppData();
+                    renderTasks();
+                }
+            }
+            editTaskModal.classList.add('hidden');
+            editingTaskId = null;
+        };
+
+        // Form Submission
+        addTaskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = taskTitleInput.value.trim();
+            const timeBlock = taskTimeBlockInput.value;
+            if (title) {
+                addTask(title, timeBlock);
+                taskTitleInput.value = '';
+            }
+        });
+
+        // Filter Buttons Logic
+        const filterAllBtn = document.getElementById('filterAll');
+        const filterPendingBtn = document.getElementById('filterPending');
+        const filterCompletedBtn = document.getElementById('filterCompleted');
+
+        function setFilter(filter) {
+            appData.activeFilter = filter;
+            [filterAllBtn, filterPendingBtn, filterCompletedBtn].forEach(btn => {
+                btn.className = "px-3 py-1 rounded-md text-cyber-muted hover:text-white transition-all";
+            });
+            if (filter === 'ALL') filterAllBtn.className = "px-3 py-1 rounded-md bg-cyber-border text-white transition-all";
+            if (filter === 'PENDING') filterPendingBtn.className = "px-3 py-1 rounded-md bg-cyber-border text-white transition-all";
+            if (filter === 'COMPLETED') filterCompletedBtn.className = "px-3 py-1 rounded-md bg-cyber-border text-white transition-all";
+            renderTasks();
+        }
+
+        filterAllBtn.onclick = () => setFilter('ALL');
+        filterPendingBtn.onclick = () => setFilter('PENDING');
+        filterCompletedBtn.onclick = () => setFilter('COMPLETED');
+
+        // --- 5. METRICS & PROGRESS CALCULATION ---
+        function updateMetrics() {
+            const totalTasks = appData.tasks.length;
+            const completedTasks = appData.tasks.filter(t => t.completed).length;
+
+            const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            document.getElementById('taskStatRatio').innerText = `${completedTasks}/${totalTasks}`;
+            document.getElementById('taskPercentText').innerText = `${percentage}%`;
+
+            // SVG Progress Circle Offset (Circumference ~100)
+            const progressCircle = document.getElementById('taskProgressCircle');
+            progressCircle.style.strokeDasharray = `${percentage}, 100`;
+
+            // Total Focus Time Display
+            const focusMins = Math.floor(appData.totalFocusSeconds / 60);
+            if (focusMins >= 60) {
+                const hrs = (focusMins / 60).toFixed(1);
+                document.getElementById('totalFocusTimeDisplay').innerText = `${hrs}h`;
+            } else {
+                document.getElementById('totalFocusTimeDisplay').innerText = `${focusMins}m`;
+            }
+
+            // Efficiency Rate
+            const efficiency = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
+            document.getElementById('efficiencyDisplay').innerText = `${efficiency}%`;
+        }
+
+        // --- 6. RESET ALL APP DATA ---
+        document.getElementById('resetAppBtn').onclick = () => {
+            if (confirm("Are you sure you want to reset all tasks and focus session time for this device?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                appData = { tasks: [], totalFocusSeconds: 0, activeFilter: 'ALL' };
+                resetTimer();
+                renderTasks();
+            }
+        };
+
+        // --- 7. INITIALIZATION ---
+        window.onload = function() {
+            loadAppData();
+            renderPresetButtons();
+            updateTimerDisplay();
+            renderTasks();
+
+            // Event Listeners for Timer Controls
+            startPauseBtn.onclick = toggleTimer;
+            resetTimerBtn.onclick = resetTimer;
+        };
+    </script>
+</body>
+</html>
