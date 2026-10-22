@@ -1,109 +1,597 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full bg-black text-slate-100">
 <head>
-<title>Voice Reverser Pro</title>
-<style>
-  body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px;
-    background-color: #f4f7f6;
-    color: #333;
-  }
-  .container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    width: 300px;
-    margin-bottom: 20px;
-  }
-  h2 { margin-top: 0; color: #555; }
-  button { 
-    padding: 12px 20px; 
-    margin: 5px; 
-    cursor: pointer; 
-    border: none;
-    border-radius: 6px;
-    background-color: #007bff;
-    color: white;
-    font-weight: bold;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  }
-  button:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  }
-  button:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N.E.R.D.S. Audio Reverser & Lab Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0a0a0c;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e50914;
+        }
+
+        /* N.E.R.D.S. Glowing Theme Accent Classes */
+        .atomic-glow {
+            box-shadow: 0 0 25px -2px rgba(229, 9, 20, 0.4);
+        }
+        .atomic-glow-green {
+            box-shadow: 0 0 20px -2px rgba(34, 197, 94, 0.4);
+        }
+        
+        /* Glassmorphism panel styling */
+        .glass-panel {
+            background: rgba(18, 18, 22, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-full flex flex-col text-slate-100 antialiased selection:bg-red-600 selection:text-white">
 
-<h1>Audio Lab</h1>
+    <!-- Toast Notification Area -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-<div class="container">
-  <h2>Recorder 1</h2>
-  <button onclick="startRecording(1)">Record 1</button>
-  <button onclick="stopRecording(1)">Stop 1</button>
-  <button onclick="playReversed(1)">Reverse Play 1</button>
-</div>
+    <!-- Header / Navbar -->
+    <header class="border-b border-red-900/30 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <!-- Custom SVG Atomic N.E.R.D.S. Logo -->
+                <div class="w-10 h-10 flex items-center justify-center relative">
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <!-- Red Orbital Rings -->
+                        <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#e50914" stroke-width="3.5" transform="rotate(0 50 50)" />
+                        <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#e50914" stroke-width="3.5" transform="rotate(60 50 50)" />
+                        <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="#e50914" stroke-width="3.5" transform="rotate(120 50 50)" />
+                        <!-- Electron Nodes -->
+                        <circle cx="85" cy="30" r="6" fill="#eab308" />
+                        <circle cx="65" cy="12" r="6" fill="#f97316" />
+                        <circle cx="15" cy="38" r="6" fill="#22c55e" />
+                        <circle cx="25" cy="72" r="6" fill="#06b6d4" />
+                        <circle cx="48" cy="88" r="6" fill="#a855f7" />
+                        <circle cx="80" cy="68" r="6" fill="#1d4ed8" />
+                        <!-- Central Green 'N' -->
+                        <text x="50" y="62" font-family="'Times New Roman', serif" font-weight="bold" font-size="34" fill="#22c55e" text-anchor="middle">N</text>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-wider text-white leading-none">N.E.R.D.S. <span class="text-red-600 font-semibold text-sm">AUDIO LAB & REVERSER</span></h1>
+                    <p class="text-xs text-slate-400 mt-0.5">High-Precision Audio Stream & Waveform Processing</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center gap-1.5 mr-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm shadow-green-500/50"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-sm shadow-yellow-400/50"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600 shadow-sm shadow-blue-600/50"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50"></span>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-950/70 text-red-400 border border-red-800/60 shadow-inner">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                    Web Audio API Core
+                </span>
+            </div>
+        </div>
+    </header>
 
-<div class="container">
-  <h2>Recorder 2</h2>
-  <button onclick="startRecording(2)">Record 2</button>
-  <button onclick="stopRecording(2)">Stop 2</button>
-  <button onclick="playReversed(2)">Reverse Play 2</button>
-</div>
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+        
+        <!-- Guidance Banner -->
+        <div class="glass-panel rounded-2xl p-6 border-red-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="mic" class="w-5 h-5 text-red-500"></i>
+                    Voice Recording & Reversal Studio
+                </h2>
+                <p class="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                    Record voice memos across multiple studio channels or upload existing audio files. Real-time visualizers render your sound waves before reversing them for playback or download.
+                </p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap self-start sm:self-center shrink-0">
+                <button onclick="addNewChannel()" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-lg shadow-red-950 flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Studio Channel
+                </button>
+            </div>
+        </div>
 
-<script>
-  let recorders = {};
-  let audioChunks = { 1: [], 2: [] };
-  let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        <!-- Studio Channels Container -->
+        <div id="channelsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Channel 1 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden channel-card" data-channel="1">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-green-500 status-dot" id="dot-1"></div>
+                        <h3 class="font-bold text-white text-base">Studio Channel 01</h3>
+                    </div>
+                    <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 status-text" id="status-1">Ready</span>
+                </div>
 
-  async function startRecording(id) {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recorders[id] = new MediaRecorder(stream);
-    audioChunks[id] = [];
-    recorders[id].ondataavailable = e => audioChunks[id].push(e.data);
-    recorders[id].start();
-  }
+                <!-- Waveform Canvas Visualizer -->
+                <div class="w-full h-32 bg-black/80 rounded-xl border border-zinc-800 relative overflow-hidden flex items-center justify-center">
+                    <canvas id="canvas-1" class="w-full h-full"></canvas>
+                    <div class="absolute bottom-2 left-3 text-[10px] font-mono text-slate-500 pointer-events-none">LIVE WAVEFORM ANALYZER</div>
+                </div>
 
-  function stopRecording(id) {
-    if (recorders[id]) recorders[id].stop();
-  }
+                <!-- Upload File Option -->
+                <div class="flex items-center gap-2">
+                    <input type="file" id="file-1" accept="audio/*" onchange="handleAudioUpload(1, event)" class="hidden">
+                    <button onclick="document.getElementById('file-1').click()" class="flex-1 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs text-slate-300 font-semibold flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="upload" class="w-4 h-4 text-cyan-400"></i> Upload Audio File
+                    </button>
+                </div>
 
-  async function playReversed(id) {
-    if (audioChunks[id].length === 0) return;
-    const blob = new Blob(audioChunks[id], { type: 'audio/ogg; codecs=opus' });
-    const arrayBuffer = await blob.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    
-    const reversedBuffer = audioContext.createBuffer(
-      audioBuffer.numberOfChannels, 
-      audioBuffer.length, 
-      audioBuffer.sampleRate
-    );
+                <!-- Controls Row 1: Record / Stop -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="startRecording(1)" id="rec-btn-1" class="py-3 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-1.5">
+                        <i data-lucide="mic" class="w-4 h-4"></i> Record
+                    </button>
+                    <button onclick="stopRecording(1)" id="stop-btn-1" disabled class="py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-not-allowed">
+                        <i data-lucide="square" class="w-4 h-4"></i> Stop
+                    </button>
+                </div>
 
-    for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
-      const channelData = audioBuffer.getChannelData(i);
-      const reversedChannelData = reversedBuffer.getChannelData(i);
-      for (let j = 0; j < channelData.length; j++) {
-        reversedChannelData[j] = channelData[channelData.length - 1 - j];
-      }
-    }
+                <!-- Controls Row 2: Play Normal / Play Reversed / Download -->
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="playAudio(1, false)" id="play-norm-1" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="play" class="w-3.5 h-3.5"></i> Normal
+                    </button>
+                    <button onclick="playAudio(1, true)" id="play-rev-1" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="rewind" class="w-3.5 h-3.5 text-yellow-400"></i> Reverse
+                    </button>
+                    <button onclick="downloadAudio(1)" id="dl-btn-1" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> WAV
+                    </button>
+                </div>
+            </div>
 
-    const source = audioContext.createBufferSource();
-    source.buffer = reversedBuffer;
-    source.connect(audioContext.destination);
-    source.start();
-  }
-</script>
+            <!-- Channel 2 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden channel-card" data-channel="2">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-green-500 status-dot" id="dot-2"></div>
+                        <h3 class="font-bold text-white text-base">Studio Channel 02</h3>
+                    </div>
+                    <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 status-text" id="status-2">Ready</span>
+                </div>
+
+                <!-- Waveform Canvas Visualizer -->
+                <div class="w-full h-32 bg-black/80 rounded-xl border border-zinc-800 relative overflow-hidden flex items-center justify-center">
+                    <canvas id="canvas-2" class="w-full h-full"></canvas>
+                    <div class="absolute bottom-2 left-3 text-[10px] font-mono text-slate-500 pointer-events-none">LIVE WAVEFORM ANALYZER</div>
+                </div>
+
+                <!-- Upload File Option -->
+                <div class="flex items-center gap-2">
+                    <input type="file" id="file-2" accept="audio/*" onchange="handleAudioUpload(2, event)" class="hidden">
+                    <button onclick="document.getElementById('file-2').click()" class="flex-1 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs text-slate-300 font-semibold flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="upload" class="w-4 h-4 text-cyan-400"></i> Upload Audio File
+                    </button>
+                </div>
+
+                <!-- Controls Row 1: Record / Stop -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="startRecording(2)" id="rec-btn-2" class="py-3 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-1.5">
+                        <i data-lucide="mic" class="w-4 h-4"></i> Record
+                    </button>
+                    <button onclick="stopRecording(2)" id="stop-btn-2" disabled class="py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-not-allowed">
+                        <i data-lucide="square" class="w-4 h-4"></i> Stop
+                    </button>
+                </div>
+
+                <!-- Controls Row 2: Play Normal / Play Reversed / Download -->
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="playAudio(2, false)" id="play-norm-2" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="play" class="w-3.5 h-3.5"></i> Normal
+                    </button>
+                    <button onclick="playAudio(2, true)" id="play-rev-2" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="rewind" class="w-3.5 h-3.5 text-yellow-400"></i> Reverse
+                    </button>
+                    <button onclick="downloadAudio(2)" id="dl-btn-2" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> WAV
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-zinc-900 py-6 text-center text-xs text-slate-600 mt-auto bg-black/40">
+        <p>N.E.R.D.S. Audio Reverser & Lab Studio &bull; Secure Client-Side Engine</p>
+    </footer>
+
+    <!-- Core Audio Lab Logic -->
+    <script>
+        let audioContext = null;
+        let recorders = {};
+        let audioBuffers = {};
+        let channelCount = 2;
+
+        window.onload = function() {
+            lucide.createIcons();
+            initAudioContext();
+            setupCanvas(1);
+            setupCanvas(2);
+        };
+
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Initialize Canvas sizing and idle line
+        function setupCanvas(id) {
+            const canvas = document.getElementById(`canvas-${id}`);
+            if (!canvas) return;
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw idle center line
+            ctx.strokeStyle = '#27272a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+        }
+
+        // Start Recording
+        async function startRecording(id) {
+            initAudioContext();
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mediaRecorder = new MediaRecorder(stream);
+                let chunks = [];
+
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    const arrayBuffer = await blob.arrayBuffer();
+                    try {
+                        const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        audioBuffers[id] = decodedBuffer;
+                        setChannelReady(id);
+                        drawWaveform(id, decodedBuffer);
+                        showToast(`Channel ${id} audio recorded successfully!`, 'success');
+                    } catch (err) {
+                        console.error(err);
+                        showToast(`Failed to decode audio recording on Channel ${id}`, 'error');
+                    }
+
+                    // Stop all microphone tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                recorders[id] = mediaRecorder;
+                mediaRecorder.start();
+
+                // UI updates for recording state
+                setChannelRecording(id);
+                showToast(`Recording started on Channel ${id}...`, 'info');
+
+            } catch (err) {
+                console.error(err);
+                showToast("Microphone access denied or unavailable", "error");
+            }
+        }
+
+        // Stop Recording
+        function stopRecording(id) {
+            if (recorders[id] && recorders[id].state !== 'inactive') {
+                recorders[id].stop();
+            }
+        }
+
+        // Handle Audio File Upload
+        async function handleAudioUpload(id, event) {
+            initAudioContext();
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                audioBuffers[id] = decodedBuffer;
+                setChannelReady(id);
+                drawWaveform(id, decodedBuffer);
+                showToast(`Audio loaded on Channel ${id}: ${file.name}`, 'success');
+            } catch (err) {
+                console.error(err);
+                showToast("Invalid audio file format", "error");
+            }
+        }
+
+        // Play Audio (Normal or Reversed)
+        function playAudio(id, reverse = false) {
+            const buffer = audioBuffers[id];
+            if (!buffer) return;
+
+            initAudioContext();
+
+            let targetBuffer = buffer;
+            if (reverse) {
+                targetBuffer = reverseAudioBuffer(buffer);
+            }
+
+            const source = audioContext.createBufferSource();
+            source.buffer = targetBuffer;
+            source.connect(audioContext.destination);
+            source.start(0);
+
+            const statEl = document.getElementById(`status-${id}`);
+            statEl.textContent = reverse ? 'Playing Reverse' : 'Playing Normal';
+            statEl.className = 'text-xs font-mono text-yellow-400 bg-yellow-950/80 px-2.5 py-1 rounded-lg border border-yellow-800 status-text';
+
+            source.onended = () => {
+                statEl.textContent = 'Ready';
+                statEl.className = 'text-xs font-mono text-slate-400 bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 status-text';
+            };
+        }
+
+        // Helper: Create Reversed AudioBuffer
+        function reverseAudioBuffer(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const length = buffer.length;
+            const sampleRate = buffer.sampleRate;
+
+            const reversedBuffer = audioContext.createBuffer(numChannels, length, sampleRate);
+
+            for (let i = 0; i < numChannels; i++) {
+                const originalData = buffer.getChannelData(i);
+                const reversedData = reversedBuffer.getChannelData(i);
+                for (let j = 0; j < length; j++) {
+                    reversedData[j] = originalData[length - 1 - j];
+                }
+            }
+            return reversedBuffer;
+        }
+
+        // Download Reversed Audio as WAV
+        function downloadAudio(id) {
+            const buffer = audioBuffers[id];
+            if (!buffer) return;
+
+            const reversedBuffer = reverseAudioBuffer(buffer);
+            const wavBlob = bufferToWave(reversedBuffer, reversedBuffer.length);
+            
+            const url = URL.createObjectURL(wavBlob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `NERDS-Reversed-Channel-${id}-${Date.now()}.wav`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+            showToast(`Downloaded reversed audio for Channel ${id}`, 'success');
+        }
+
+        // Convert AudioBuffer to WAV Blob
+        function bufferToWave(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+                length = len * numOfChan * 2 + 44,
+                buffer = new ArrayBuffer(length),
+                view = new DataView(buffer),
+                channels = [],
+                sampleRate = abuffer.sampleRate,
+                offset = 0,
+                pos = 0;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+
+            // WAV header
+            setUint32(0x46464952);                         // "RIFF"
+            setUint32(length - 8);                         // file length - 8
+            setUint32(0x45564157);                         // "WAVE"
+
+            setUint32(0x20746d66);                         // "fmt " chunk
+            setUint32(16);                                 // length = 16
+            setUint32(1);                                  // PCM (1)
+            setUint16(numOfChan);
+            setUint32(sampleRate);
+            setUint32(sampleRate * 2 * numOfChan);         // byte rate
+            setUint16(numOfChan * 2);                      // block align
+            setUint16(16);                                 // 16-bit
+            setUint32(0x61746164);                         // "data" chunk
+            setUint32(length - pos - 4);
+
+            for (let i = 0; i < abuffer.numberOfChannels; i++)
+                channels.push(abuffer.getChannelData(i));
+
+            while (pos < length) {
+                for (let i = 0; i < numOfChan; i++) {
+                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767);
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([buffer], { type: "audio/wav" });
+        }
+
+        // Draw Waveform on Canvas
+        function drawWaveform(id, buffer) {
+            const canvas = document.getElementById(`canvas-${id}`);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+
+            const data = buffer.getChannelData(0);
+            const step = Math.ceil(data.length / width);
+            const amp = height / 2;
+
+            ctx.strokeStyle = '#e50914';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let i = 0; i < width; i++) {
+                let min = 1.0;
+                let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const datum = data[(i * step) + j];
+                    if (datum < min) min = datum;
+                    if (datum > max) max = datum;
+                }
+                ctx.moveTo(i, (1 + min) * amp);
+                ctx.lineTo(i, (1 + max) * amp);
+            }
+            ctx.stroke();
+        }
+
+        // UI State Helpers
+        function setChannelRecording(id) {
+            document.getElementById(`dot-1`).className = id === 1 ? 'w-3 h-3 rounded-full bg-red-500 animate-ping status-dot' : document.getElementById('dot-1').className;
+            document.getElementById(`status-${id}`).textContent = 'Recording...';
+            document.getElementById(`status-${id}`).className = 'text-xs font-mono text-red-400 bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-800 status-text';
+            
+            document.getElementById(`rec-btn-${id}`).disabled = true;
+            document.getElementById(`rec-btn-${id}`).className = 'py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-bold text-xs cursor-not-allowed';
+            
+            document.getElementById(`stop-btn-${id}`).disabled = false;
+            document.getElementById(`stop-btn-${id}`).className = 'py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-1.5';
+        }
+
+        function setChannelReady(id) {
+            document.getElementById(`dot-${id}`).className = 'w-3 h-3 rounded-full bg-green-500 status-dot';
+            document.getElementById(`status-${id}`).textContent = 'Ready';
+            document.getElementById(`status-${id}`).className = 'text-xs font-mono text-green-400 bg-green-950/80 px-2.5 py-1 rounded-lg border border-green-800 status-text';
+
+            document.getElementById(`rec-btn-${id}`).disabled = false;
+            document.getElementById(`rec-btn-${id}`).className = 'py-3 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer';
+
+            document.getElementById(`stop-btn-${id}`).disabled = true;
+            document.getElementById(`stop-btn-${id}`).className = 'py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-bold text-xs cursor-not-allowed';
+
+            ['play-norm-', 'play-rev-', 'dl-btn-'].forEach(prefix => {
+                const btn = document.getElementById(`${prefix}${id}`);
+                btn.disabled = false;
+                btn.className = btn.className.replace('text-slate-500 cursor-not-allowed', 'text-slate-200 hover:border-red-600 cursor-pointer');
+            });
+        }
+
+        // Add New Channel dynamically
+        function addNewChannel() {
+            channelCount++;
+            const container = document.getElementById('channelsContainer');
+            const card = document.createElement('div');
+            card.className = 'glass-panel rounded-2xl p-6 shadow-2xl flex flex-col gap-5 relative overflow-hidden channel-card';
+            card.setAttribute('data-channel', channelCount);
+            card.innerHTML = `
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-green-500 status-dot" id="dot-${channelCount}"></div>
+                        <h3 class="font-bold text-white text-base">Studio Channel 0${channelCount}</h3>
+                    </div>
+                    <span class="text-xs font-mono text-slate-400 bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 status-text" id="status-${channelCount}">Ready</span>
+                </div>
+                <div class="w-full h-32 bg-black/80 rounded-xl border border-zinc-800 relative overflow-hidden flex items-center justify-center">
+                    <canvas id="canvas-${channelCount}" class="w-full h-full"></canvas>
+                    <div class="absolute bottom-2 left-3 text-[10px] font-mono text-slate-500 pointer-events-none">LIVE WAVEFORM ANALYZER</div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="file" id="file-${channelCount}" accept="audio/*" onchange="handleAudioUpload(${channelCount}, event)" class="hidden">
+                    <button onclick="document.getElementById('file-${channelCount}').click()" class="flex-1 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs text-slate-300 font-semibold flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="upload" class="w-4 h-4 text-cyan-400"></i> Upload Audio File
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="startRecording(${channelCount})" id="rec-btn-${channelCount}" class="py-3 rounded-xl bg-red-600/90 hover:bg-red-600 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-1.5">
+                        <i data-lucide="mic" class="w-4 h-4"></i> Record
+                    </button>
+                    <button onclick="stopRecording(${channelCount})" id="stop-btn-${channelCount}" disabled class="py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-not-allowed">
+                        <i data-lucide="square" class="w-4 h-4"></i> Stop
+                    </button>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="playAudio(${channelCount}, false)" id="play-norm-${channelCount}" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="play" class="w-3.5 h-3.5"></i> Normal
+                    </button>
+                    <button onclick="playAudio(${channelCount}, true)" id="play-rev-${channelCount}" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="rewind" class="w-3.5 h-3.5 text-yellow-400"></i> Reverse
+                    </button>
+                    <button onclick="downloadAudio(${channelCount})" id="dl-btn-${channelCount}" disabled class="py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-slate-500 font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-not-allowed">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> WAV
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+            lucide.createIcons();
+            setupCanvas(channelCount);
+            showToast(`Added Studio Channel 0${channelCount}`, 'success');
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold transition-all duration-300 transform translate-y-2 opacity-0 ${
+                type === 'error' ? 'bg-red-950 border-red-800 text-red-200' : 
+                type === 'success' ? 'bg-emerald-950 border-emerald-800 text-emerald-200' : 'bg-zinc-900 border-zinc-700 text-zinc-100'
+            }`;
+            
+            const iconName = type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle-2' : 'info';
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
