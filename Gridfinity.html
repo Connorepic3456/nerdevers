@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N.E.R.D.S. 3D Print & Gridfinity Studio</title>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,30 +13,34 @@
             theme: {
                 extend: {
                     colors: {
-                        studio: {
-                            bg: '#0B0F17',
-                            card: '#131B2A',
-                            border: '#1E293B',
-                            orange: '#FF6B00',
-                            cyan: '#00F0FF',
+                        nerds: {
+                            bg: '#0B0C10',
+                            card: '#13151C',
+                            cardHover: '#181B24',
+                            border: 'rgba(225, 29, 72, 0.25)',
+                            borderLight: 'rgba(255, 255, 255, 0.08)',
+                            red: '#E53935',
+                            redHover: '#F44336',
                             text: '#E2E8F0',
-                            muted: '#64748B',
-                            success: '#10B981',
-                            warning: '#F59E0B'
+                            muted: '#94A3B8',
+                            cyan: '#00F0FF',
+                            green: '#10B981',
+                            amber: '#F59E0B'
                         }
                     },
                     fontFamily: {
-                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-                        sans: ['Inter', 'sans-serif']
+                        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
                     }
                 }
             }
         }
     </script>
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Three.js & OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -44,7 +49,6 @@
     <!-- Three.js Loaders & Exporters -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
 
     <!-- JSZip for 3MF Container Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -52,477 +56,411 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0B0F17;
+            background-color: #0B0C10;
             color: #E2E8F0;
             overflow-x: hidden;
         }
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
-        .glass-card {
-            background: rgba(19, 27, 42, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(30, 41, 59, 0.8);
+        .nerds-card {
+            background-color: #13151C;
+            border: 1px solid rgba(225, 29, 72, 0.2);
+            border-radius: 1rem;
+        }
+        .nerds-card-subtle {
+            background-color: #0F1117;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 0.75rem;
+        }
+        .nerds-glow {
+            box-shadow: 0 0 25px -5px rgba(229, 57, 53, 0.25);
         }
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #0B0F17;
+            background: #0B0C10;
         }
         ::-webkit-scrollbar-thumb {
-            background: #1E293B;
+            background: #1F2430;
             border-radius: 3px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #FF6B00;
+            background: #E53935;
         }
         input[type=range] {
-            accent-color: #FF6B00;
+            accent-color: #E53935;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-studio-orange selection:text-black">
+<body class="min-h-screen flex flex-col justify-between selection:bg-nerds-red selection:text-white">
 
-    <!-- HEADER / NAVIGATION -->
-    <header class="border-b border-studio-border bg-studio-card/90 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-studio-orange to-amber-600 flex items-center justify-center font-mono font-bold text-black text-xl shadow-lg shadow-studio-orange/20">
-                    <i class="fa-solid fa-cube"></i>
+    <!-- HEADER / BRANDING BAR -->
+    <header class="border-b border-nerds-border/50 bg-[#0B0C10]/95 backdrop-blur-md sticky top-0 z-50 px-4 sm:px-8 py-3.5">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <!-- BRANDING & LOGO -->
+            <div class="flex items-center space-x-3.5">
+                <div class="relative w-10 h-10 flex items-center justify-center">
+                    <svg class="w-10 h-10" viewBox="0 0 100 100" fill="none">
+                        <ellipse cx="50" cy="50" rx="42" ry="14" stroke="#E53935" stroke-width="4" transform="rotate(0 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="42" ry="14" stroke="#00F0FF" stroke-width="4" transform="rotate(60 50 50)"/>
+                        <ellipse cx="50" cy="50" rx="42" ry="14" stroke="#F59E0B" stroke-width="4" transform="rotate(120 50 50)"/>
+                        <circle cx="50" cy="50" r="10" fill="#E53935"/>
+                        <text x="50" y="54" font-family="sans-serif" font-weight="900" font-size="11" fill="white" text-anchor="middle">N</text>
+                    </svg>
                 </div>
                 <div>
-                    <h1 class="text-base sm:text-lg font-bold tracking-wider text-white font-mono flex items-center gap-2">
-                        N.E.R.D.S. <span class="text-xs px-2 py-0.5 rounded bg-studio-orange/10 text-studio-orange border border-studio-orange/30 font-sans font-semibold uppercase tracking-normal">3D PRINT & GRIDFINITY STUDIO</span>
+                    <h1 class="text-base sm:text-lg font-black tracking-wider text-white font-mono flex items-center gap-2">
+                        N.E.R.D.S. <span class="text-nerds-red">3D PRINT STUDIO</span>
                     </h1>
-                    <p class="text-xs text-studio-muted hidden sm:block">3D Parametric Gridfinity Generator & Export Engine</p>
+                    <p class="text-[11px] text-nerds-muted font-sans font-medium">Parametric Gridfinity Generator & Movable Cutout Studio</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <span class="hidden md:inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-full bg-studio-bg border border-studio-border text-studio-muted">
-                    <span class="w-2 h-2 rounded-full bg-studio-success animate-pulse"></span> 3D ENGINE ACTIVE
-                </span>
-                <button id="resetDefaultsBtn" title="Reset All Parameters" class="p-2 text-studio-muted hover:text-studio-orange transition-colors rounded-lg hover:bg-studio-border/50 text-xs flex items-center gap-1.5">
+            <!-- TOP RIGHT CONTROLS -->
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-nerds-card-subtle border border-nerds-borderLight">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                </div>
+
+                <div class="px-3.5 py-1.5 rounded-full bg-nerds-red/10 border border-nerds-red/40 text-nerds-red text-xs font-mono font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-nerds-red animate-pulse"></span>
+                    <span>100% Client-Side Engine</span>
+                </div>
+
+                <button id="resetDefaultsBtn" title="Reset All Parameters" class="p-2 text-nerds-muted hover:text-nerds-red transition-colors rounded-lg hover:bg-nerds-card-subtle text-xs flex items-center gap-1">
                     <i class="fa-solid fa-rotate-left"></i>
-                    <span class="hidden sm:inline font-mono">Reset</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- MAIN STUDIO DASHBOARD -->
+    <!-- MAIN APP DASHBOARD CONTAINER -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
 
-        <!-- GRIDFINITY 3D STUDIO SECTION (SPLITVIEW) -->
+        <!-- HERO BANNER CARD -->
+        <section class="nerds-card p-6 nerds-glow relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="space-y-2 max-w-3xl">
+                    <div class="flex items-center gap-2 text-nerds-red font-bold text-lg font-mono">
+                        <i class="fa-solid fa-crosshairs"></i>
+                        <h2>Movable Cutout & Custom Tool Tray Designer</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-nerds-muted leading-relaxed">
+                        Design standard 42mm Gridfinity bins and position custom movable cutouts anywhere in 3D space. Use device presets (Flipper Zero, Wire Cutters) or custom boxes/STLs to carve out precise recessed pockets for custom holders, tools, and electronics.
+                    </p>
+                </div>
+                <div class="shrink-0">
+                    <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0F1117] border border-cyan-500/30 text-cyan-400 text-xs font-mono font-semibold">
+                        <i class="fa-solid fa-arrows-up-down-left-right"></i> Live Cutout Positioning
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAIN SPLIT VIEW: INPUT CONTROLS & THREE.JS VIEWPORT -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- LEFT COLUMN: 3D PARAMETRIC CONTROLS (5 Cols) -->
-            <section class="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-5">
-                <div>
-                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-studio-border">
-                        <h2 class="text-sm font-mono font-bold tracking-wider text-studio-orange uppercase flex items-center gap-2">
-                            <i class="fa-solid fa-sliders"></i> Gridfinity Generator Controls
-                        </h2>
-                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-studio-border text-studio-cyan">42mm Pitch Base</span>
+
+            <!-- LEFT SIDE: INPUT & DESIGN PARAMETERS (5 COLS) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- STEP 1: DIMENSION MATRIX -->
+                <section class="nerds-card p-5 space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-nerds-border/50">
+                        <h3 class="text-sm font-mono font-bold tracking-wider text-nerds-red uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-cubes text-xs"></i> 1. Gridfinity Dimension Matrix
+                        </h3>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-nerds-card-subtle text-nerds-cyan border border-nerds-borderLight">42mm Pitch</span>
                     </div>
 
-                    <!-- Bin Mode Selection -->
-                    <div class="mb-4">
-                        <label class="text-xs font-mono text-studio-muted block mb-1.5">Bin Architecture Mode</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button id="modeSingleBtn" class="py-2 px-3 text-xs font-mono rounded-xl border border-studio-orange bg-studio-orange/10 text-studio-orange font-bold transition-all flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-box-open"></i> Single Cavity
-                            </button>
-                            <button id="modeSubdividedBtn" class="py-2 px-3 text-xs font-mono rounded-xl border border-studio-border bg-studio-bg text-studio-muted hover:border-studio-orange transition-all flex items-center justify-center gap-1.5">
-                                <i class="fa-solid fa-border-all"></i> Compartments
-                            </button>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="nerds-card-subtle p-3">
+                            <label class="text-[11px] font-mono text-nerds-muted block mb-1">Grid X (42mm)</label>
+                            <input type="number" id="gfUnitsX" min="1" max="10" value="3" class="w-full bg-[#181B24] border border-nerds-borderLight rounded-lg px-2.5 py-1.5 font-mono text-xs text-white focus:outline-none focus:border-nerds-red">
                         </div>
-                    </div>
-
-                    <!-- Dimensions Grid (X, Y, Z) -->
-                    <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div class="bg-studio-bg p-3 rounded-xl border border-studio-border">
-                            <label class="text-[11px] font-mono text-studio-muted block mb-1">Grid X (42mm)</label>
-                            <input type="number" id="gfUnitsX" min="1" max="10" value="2" class="w-full bg-studio-card border border-studio-border rounded-lg px-2.5 py-1 font-mono text-xs text-white focus:outline-none focus:border-studio-orange">
+                        <div class="nerds-card-subtle p-3">
+                            <label class="text-[11px] font-mono text-nerds-muted block mb-1">Grid Y (42mm)</label>
+                            <input type="number" id="gfUnitsY" min="1" max="10" value="2" class="w-full bg-[#181B24] border border-nerds-borderLight rounded-lg px-2.5 py-1.5 font-mono text-xs text-white focus:outline-none focus:border-nerds-red">
                         </div>
-                        <div class="bg-studio-bg p-3 rounded-xl border border-studio-border">
-                            <label class="text-[11px] font-mono text-studio-muted block mb-1">Grid Y (42mm)</label>
-                            <input type="number" id="gfUnitsY" min="1" max="10" value="3" class="w-full bg-studio-card border border-studio-border rounded-lg px-2.5 py-1 font-mono text-xs text-white focus:outline-none focus:border-studio-orange">
-                        </div>
-                        <div class="bg-studio-bg p-3 rounded-xl border border-studio-border">
-                            <label class="text-[11px] font-mono text-studio-muted block mb-1">Height Z (7mm)</label>
-                            <input type="number" id="gfUnitsZ" min="2" max="20" value="6" class="w-full bg-studio-card border border-studio-border rounded-lg px-2.5 py-1 font-mono text-xs text-white focus:outline-none focus:border-studio-orange">
+                        <div class="nerds-card-subtle p-3">
+                            <label class="text-[11px] font-mono text-nerds-muted block mb-1">Height Z (7mm)</label>
+                            <input type="number" id="gfUnitsZ" min="2" max="20" value="6" class="w-full bg-[#181B24] border border-nerds-borderLight rounded-lg px-2.5 py-1.5 font-mono text-xs text-white focus:outline-none focus:border-nerds-red">
                         </div>
                     </div>
 
-                    <!-- Height Slider -->
-                    <div class="bg-studio-bg p-3.5 rounded-xl border border-studio-border mb-4">
-                        <div class="flex justify-between items-center text-xs font-mono mb-1">
-                            <span class="text-studio-muted">Height Fine Tuning:</span>
-                            <span id="heightMmDisplay" class="text-studio-orange font-bold">42.0 mm (6U)</span>
+                    <div class="nerds-card-subtle p-3.5 space-y-2">
+                        <div class="flex justify-between items-center text-xs font-mono">
+                            <span class="text-nerds-muted">Total Height Readout:</span>
+                            <span id="heightMmDisplay" class="text-nerds-red font-bold">42.0 mm (6U)</span>
                         </div>
-                        <input type="range" id="gfHeightSlider" min="2" max="20" step="1" value="6" class="w-full h-1.5 bg-studio-border rounded-lg appearance-none cursor-pointer">
+                        <input type="range" id="gfHeightSlider" min="2" max="20" step="1" value="6" class="w-full h-1.5 bg-[#181B24] rounded-lg appearance-none cursor-pointer">
                     </div>
 
-                    <!-- Subdivisions -->
-                    <div id="subdividerBox" class="opacity-50 pointer-events-none transition-all grid grid-cols-2 gap-3 mb-4 p-3 rounded-xl bg-studio-bg border border-studio-border">
-                        <div>
-                            <label class="text-[10px] font-mono text-studio-muted block mb-1">Subdivisions X</label>
-                            <input type="number" id="gfDivX" min="1" max="6" value="1" class="w-full bg-studio-card border border-studio-border rounded-lg px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-mono text-studio-muted block mb-1">Subdivisions Y</label>
-                            <input type="number" id="gfDivY" min="1" max="6" value="1" class="w-full bg-studio-card border border-studio-border rounded-lg px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                        </div>
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-nerds-borderLight">
+                        <label class="flex items-center space-x-2 text-xs font-mono text-white cursor-pointer">
+                            <input type="checkbox" id="gfLipToggle" checked class="rounded accent-nerds-red">
+                            <span>Top Stacking Lip</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-mono text-white cursor-pointer">
+                            <input type="checkbox" id="gfMagnetToggle" checked class="rounded accent-nerds-red">
+                            <span>Base Magnets (6x2mm)</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- STEP 2: MOVABLE CUTOUT & POCKET STUDIO -->
+                <section class="nerds-card p-5 space-y-4 border-cyan-500/30">
+                    <div class="flex justify-between items-center pb-3 border-b border-nerds-border/50">
+                        <h3 class="text-sm font-mono font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-arrows-up-down-left-right text-xs"></i> 2. Movable Cutout & Pocket Studio
+                        </h3>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-500/30">Subtractive Cavity</span>
                     </div>
 
-                    <!-- Cutouts & Features Options -->
-                    <div class="p-3.5 rounded-xl bg-studio-bg border border-studio-border space-y-3 mb-4">
-                        <div class="text-[11px] font-mono text-studio-orange font-bold uppercase flex items-center gap-1.5">
-                            <i class="fa-solid fa-scissors"></i> Cutouts & Features
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] font-mono text-studio-muted block mb-1">Cutout Type</label>
-                                <select id="cutoutType" class="w-full bg-studio-card border border-studio-border rounded-lg px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                                    <option value="none">None (Full Rim)</option>
-                                    <option value="thumb">Front Thumb Scoop</option>
-                                    <option value="label">Label Lip / Tag</option>
-                                    <option value="side">Side Grip Slots</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-mono text-studio-muted block mb-1">Cutout Depth</label>
-                                <select id="cutoutDepth" class="w-full bg-studio-card border border-studio-border rounded-lg px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                                    <option value="shallow">Shallow (25% Z)</option>
-                                    <option value="medium" selected>Medium (50% Z)</option>
-                                    <option value="deep">Deep (75% Z)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Toggles -->
-                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-studio-border/60">
-                            <label class="flex items-center space-x-2 text-[11px] font-mono text-white cursor-pointer">
-                                <input type="checkbox" id="gfLipToggle" checked class="rounded accent-studio-orange">
-                                <span>Stacking Lip</span>
-                            </label>
-                            <label class="flex items-center space-x-2 text-[11px] font-mono text-white cursor-pointer">
-                                <input type="checkbox" id="gfMagnetToggle" checked class="rounded accent-studio-orange">
-                                <span>Base Magnets (6x2mm)</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- TEXT LABELING SECTION -->
-                    <div class="p-3.5 rounded-xl bg-studio-bg border border-studio-border space-y-3 mb-4">
-                        <div class="text-[11px] font-mono text-studio-cyan font-bold uppercase flex items-center gap-1.5">
-                            <i class="fa-solid fa-font"></i> Custom Text Labeling
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div class="col-span-2">
-                                <label class="text-[10px] font-mono text-studio-muted block mb-1">Label Text</label>
-                                <input type="text" id="labelText" placeholder="e.g., M3 SCREWS" class="w-full bg-studio-card border border-studio-border rounded-lg px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-mono text-studio-muted block mb-1">Style</label>
-                                <select id="labelStyle" class="w-full bg-studio-card border border-studio-border rounded-lg px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                                    <option value="emboss">Emboss</option>
-                                    <option value="engrave">Engrave</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- MESH OVERLAY / IMPORT SECTION -->
-                    <div class="p-3.5 rounded-xl bg-studio-bg border border-studio-border space-y-2 mb-4">
-                        <div class="text-[11px] font-mono text-studio-warning font-bold uppercase flex items-center gap-1.5">
-                            <i class="fa-solid fa-file-import"></i> Custom STL Mesh Overlay
-                        </div>
-                        <input type="file" id="stlFileInput" accept=".stl" class="hidden">
-                        <div class="flex items-center gap-2">
-                            <button id="uploadStlBtn" class="flex-grow py-1.5 px-3 bg-studio-card hover:bg-studio-border border border-studio-border rounded-lg text-xs font-mono text-studio-text flex items-center justify-center gap-1.5 transition-all">
-                                <i class="fa-solid fa-upload text-studio-orange"></i> Upload STL Model
-                            </button>
-                            <button id="clearStlBtn" class="hidden p-1.5 bg-red-500/20 border border-red-500/40 text-red-400 rounded-lg text-xs hover:bg-red-500/30">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                        <div id="stlStatus" class="text-[10px] font-mono text-studio-muted truncate">No custom mesh overlay loaded.</div>
-                    </div>
-
-                    <!-- Calculated Specs Bar -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 rounded-xl bg-studio-bg border border-studio-border text-center font-mono">
-                        <div>
-                            <div class="text-[9px] text-studio-muted">OUTER X</div>
-                            <div class="text-xs font-bold text-studio-cyan" id="gfOutW">83.5 mm</div>
-                        </div>
-                        <div>
-                            <div class="text-[9px] text-studio-muted">OUTER Y</div>
-                            <div class="text-xs font-bold text-studio-cyan" id="gfOutD">125.5 mm</div>
-                        </div>
-                        <div>
-                            <div class="text-[9px] text-studio-muted">OUTER Z</div>
-                            <div class="text-xs font-bold text-studio-cyan" id="gfOutH">42.0 mm</div>
-                        </div>
-                        <div>
-                            <div class="text-[9px] text-studio-muted">EST. VOLUME</div>
-                            <div class="text-xs font-bold text-studio-orange" id="gfOutVol">~380 cm³</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- RIGHT COLUMN: 3D THREE.JS VIEWPORT & EXPORT PANEL (7 Cols) -->
-            <section class="lg:col-span-7 glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
-                <div class="flex justify-between items-center border-b border-studio-border pb-3">
-                    <div class="flex items-center space-x-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-studio-cyan animate-pulse"></span>
-                        <h2 class="text-sm font-mono font-bold tracking-wider text-white uppercase">3D Real-Time Parametric Preview</h2>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button id="matToggleBtn" class="text-[11px] font-mono px-2.5 py-1 rounded bg-studio-bg border border-studio-border text-studio-muted hover:text-white transition-all flex items-center gap-1">
-                            <i class="fa-solid fa-palette text-studio-orange"></i> <span id="matLabel">Matte Plastic</span>
-                        </button>
-                        <button id="recenterCamBtn" class="text-[11px] font-mono px-2.5 py-1 rounded bg-studio-bg border border-studio-border text-studio-muted hover:text-white transition-all" title="Recenter View">
-                            <i class="fa-solid fa-compress"></i> Recenter
-                        </button>
-                    </div>
-                </div>
-
-                <!-- WebGL Viewport Box -->
-                <div class="relative w-full h-[400px] bg-[#070A10] border border-studio-border rounded-xl overflow-hidden group">
-                    <div id="threejsViewport" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
-                    
-                    <!-- Viewport Floating HUD Controls -->
-                    <div class="absolute bottom-3 left-3 bg-studio-card/80 backdrop-blur border border-studio-border px-3 py-1.5 rounded-lg text-[10px] font-mono text-studio-muted flex items-center gap-3">
-                        <span><i class="fa-solid fa-mouse text-studio-orange"></i> Drag: Rotate</span>
-                        <span><i class="fa-solid fa-arrows-up-down-left-right text-studio-cyan"></i> Right Drag: Pan</span>
-                        <span><i class="fa-solid fa-magnifying-glass"></i> Scroll: Zoom</span>
-                    </div>
-                </div>
-
-                <!-- 3D MODEL EXPORT ACTION BAR -->
-                <div class="p-4 rounded-xl bg-studio-bg border border-studio-border flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <!-- Cutout Shape Preset -->
                     <div>
-                        <div class="text-xs font-mono font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-download text-studio-orange"></i> Export Slicer Ready 3D Models
+                        <label class="text-xs font-mono text-nerds-muted block mb-1.5">Cutout / Tool Preset</label>
+                        <select id="cutoutPreset" class="w-full bg-[#181B24] border border-nerds-borderLight rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-400">
+                            <option value="box">Custom Block Cavity</option>
+                            <option value="cylinder">Cylinder / Pod Cavity</option>
+                            <option value="flipper">Flipper Zero Pocket Preset</option>
+                            <option value="pliers">Wire Cutters / Pliers Preset</option>
+                            <option value="customstl">Custom Uploaded STL Mesh</option>
+                        </select>
+                    </div>
+
+                    <!-- STL Upload for Cutout if needed -->
+                    <div id="cutoutStlBox" class="hidden nerds-card-subtle p-3 space-y-2">
+                        <div class="text-[11px] font-mono text-nerds-amber font-bold uppercase flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-import"></i> Cutout STL Tool / Device
                         </div>
-                        <div class="text-[11px] font-sans text-studio-muted">Generate production-ready CAD files for Bambu Studio, PrusaSlicer, or Cura.</div>
+                        <input type="file" id="cutoutStlInput" accept=".stl" class="hidden">
+                        <div class="flex items-center gap-2">
+                            <button id="uploadCutoutStlBtn" class="flex-grow py-1.5 px-3 bg-[#181B24] hover:bg-nerds-borderLight border border-nerds-borderLight rounded-lg text-xs font-mono text-nerds-text flex items-center justify-center gap-2 transition-all">
+                                <i class="fa-solid fa-upload text-cyan-400"></i> Upload Device/Tool STL
+                            </button>
+                        </div>
+                        <div id="cutoutStlStatus" class="text-[10px] font-mono text-nerds-muted truncate">No custom device STL loaded.</div>
                     </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <button id="exportStlBtn" class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-gradient-to-r from-studio-orange to-amber-600 text-black font-mono font-bold text-xs shadow-lg shadow-studio-orange/20 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-file-export"></i> Export STL
-                        </button>
-                        <button id="export3mfBtn" class="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-studio-card hover:bg-studio-border border border-studio-cyan text-studio-cyan font-mono font-bold text-xs shadow-lg shadow-studio-cyan/10 hover:brightness-125 active:scale-95 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-box text-studio-cyan"></i> Export 3MF
-                        </button>
+
+                    <!-- Position X & Y -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="nerds-card-subtle p-3">
+                            <div class="flex justify-between text-[11px] font-mono text-nerds-muted mb-1">
+                                <span>Position X</span>
+                                <span id="valPosX" class="text-cyan-400 font-bold">0.0 mm</span>
+                            </div>
+                            <input type="range" id="cutoutPosX" min="-60" max="60" step="1" value="0" class="w-full h-1 bg-[#181B24] rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="nerds-card-subtle p-3">
+                            <div class="flex justify-between text-[11px] font-mono text-nerds-muted mb-1">
+                                <span>Position Y</span>
+                                <span id="valPosY" class="text-cyan-400 font-bold">0.0 mm</span>
+                            </div>
+                            <input type="range" id="cutoutPosY" min="-60" max="60" step="1" value="0" class="w-full h-1 bg-[#181B24] rounded-lg appearance-none cursor-pointer">
+                        </div>
                     </div>
-                </div>
-            </section>
+
+                    <!-- Elevation Z & Rotation -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="nerds-card-subtle p-3">
+                            <div class="flex justify-between text-[11px] font-mono text-nerds-muted mb-1">
+                                <span>Elevation Z</span>
+                                <span id="valPosZ" class="text-cyan-400 font-bold">4.0 mm</span>
+                            </div>
+                            <input type="range" id="cutoutPosZ" min="2" max="35" step="1" value="4" class="w-full h-1 bg-[#181B24] rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="nerds-card-subtle p-3">
+                            <div class="flex justify-between text-[11px] font-mono text-nerds-muted mb-1">
+                                <span>Rotation Yaw</span>
+                                <span id="valRot" class="text-cyan-400 font-bold">0°</span>
+                            </div>
+                            <input type="range" id="cutoutRot" min="0" max="360" step="5" value="0" class="w-full h-1 bg-[#181B24] rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Cutout Scale / Size -->
+                    <div class="nerds-card-subtle p-3 space-y-2">
+                        <div class="flex justify-between text-[11px] font-mono text-nerds-muted mb-1">
+                            <span>Cutout Scale / Tolerance Clearance</span>
+                            <span id="valScale" class="text-cyan-400 font-bold">105% (Easy Fit)</span>
+                        </div>
+                        <input type="range" id="cutoutScale" min="90" max="150" step="1" value="105" class="w-full h-1 bg-[#181B24] rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT SIDE: 3D VIEWPORT & EXPORT ACTIONS (7 COLS) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- STEP 3: 3D VIEWPORT -->
+                <section class="nerds-card p-5 space-y-4 flex flex-col justify-between h-full">
+                    <div>
+                        <div class="flex justify-between items-center pb-3 border-b border-nerds-border/50 mb-4">
+                            <h3 class="text-sm font-mono font-bold tracking-wider text-white uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-cube text-nerds-cyan"></i> 3. 3D Viewport & Model Export
+                            </h3>
+                            <div class="flex items-center space-x-2">
+                                <button id="matToggleBtn" class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-nerds-card-subtle border border-nerds-borderLight text-nerds-muted hover:text-white transition-all flex items-center gap-1.5">
+                                    <i class="fa-solid fa-palette text-nerds-red"></i> <span id="matLabel">Matte Red</span>
+                                </button>
+                                <button id="recenterCamBtn" class="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-nerds-card-subtle border border-nerds-borderLight text-nerds-muted hover:text-white transition-all" title="Recenter View">
+                                    <i class="fa-solid fa-compress"></i> Recenter
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3D Canvas Box -->
+                        <div class="relative w-full h-[380px] sm:h-[420px] bg-[#07080B] border border-nerds-borderLight rounded-xl overflow-hidden">
+                            <div id="threejsViewport" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+                            
+                            <!-- Viewport Controls Overlay -->
+                            <div class="absolute bottom-3 left-3 bg-[#13151C]/90 backdrop-blur border border-nerds-borderLight px-3 py-1.5 rounded-lg text-[10px] font-mono text-nerds-muted flex items-center gap-3">
+                                <span><i class="fa-solid fa-mouse text-nerds-red"></i> Drag: Rotate</span>
+                                <span><i class="fa-solid fa-arrows-up-down-left-right text-nerds-cyan"></i> Right Drag: Pan</span>
+                                <span><i class="fa-solid fa-magnifying-glass"></i> Scroll: Zoom</span>
+                            </div>
+                        </div>
+
+                        <!-- Physical Specs Readout Bar -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 p-3 rounded-xl bg-nerds-card-subtle border border-nerds-borderLight text-center font-mono">
+                            <div>
+                                <div class="text-[9px] text-nerds-muted">OUTER X</div>
+                                <div class="text-xs font-bold text-nerds-cyan" id="gfOutW">125.5 mm</div>
+                            </div>
+                            <div>
+                                <div class="text-[9px] text-nerds-muted">OUTER Y</div>
+                                <div class="text-xs font-bold text-nerds-cyan" id="gfOutD">83.5 mm</div>
+                            </div>
+                            <div>
+                                <div class="text-[9px] text-nerds-muted">OUTER Z</div>
+                                <div class="text-xs font-bold text-nerds-cyan" id="gfOutH">42.0 mm</div>
+                            </div>
+                            <div>
+                                <div class="text-[9px] text-nerds-muted">EST. VOLUME</div>
+                                <div class="text-xs font-bold text-nerds-red" id="gfOutVol">~450 cm³</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Buttons Bar -->
+                    <div class="pt-4 border-t border-nerds-border/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="text-xs font-mono text-nerds-muted">
+                            Export production-ready STL & 3MF models with your custom movable cavity.
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <button id="exportStlBtn" class="flex-1 sm:flex-none py-2.5 px-5 rounded-xl bg-nerds-red hover:bg-nerds-redHover text-white font-mono font-bold text-xs shadow-lg shadow-nerds-red/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-file-export"></i> Export STL
+                            </button>
+                            <button id="export3mfBtn" class="flex-1 sm:flex-none py-2.5 px-5 rounded-xl bg-nerds-card-subtle hover:bg-nerds-borderLight border border-nerds-cyan text-cyan-400 font-mono font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-box text-cyan-400"></i> Export 3MF
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
 
-        <!-- UTILITY SUITE GRID (TPU & TOLERANCE CALIBRATOR) -->
+        <!-- UTILITY SUITE SECTION: TOLERANCE CALIBRATION -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <!-- TPU SETTINGS & SPEED CALCULATOR (6 Cols) -->
-            <section class="lg:col-span-6 glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5">
+            <!-- STEP 4: CLEARANCE & TOLERANCE CALIBRATION (12 COLS) -->
+            <section class="lg:col-span-12 nerds-card p-5 space-y-4">
+                <div class="flex justify-between items-center pb-3 border-b border-nerds-border/50">
+                    <h3 class="text-sm font-mono font-bold tracking-wider text-nerds-red uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-arrows-to-line text-xs"></i> 4. Clearance & Tolerance Calibration
+                    </h3>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-nerds-card-subtle text-nerds-cyan border border-nerds-borderLight">Joint Fits</span>
+                </div>
+
                 <div>
-                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-studio-border">
-                        <h2 class="text-sm font-mono font-bold tracking-wider text-studio-orange uppercase flex items-center gap-2">
-                            <i class="fa-solid fa-gauge-high"></i> TPU Speed & Parameters
-                        </h2>
-                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-studio-border text-studio-orange">Flexible Filament</span>
+                    <label class="text-xs font-mono text-nerds-muted block mb-2">Target Joint Clearance Gap</label>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 font-mono text-xs" id="toleranceBtnGroup">
+                        <button data-gap="0.10" class="tol-btn py-2 px-2 rounded-lg border bg-nerds-card-subtle text-nerds-muted border-nerds-borderLight hover:border-nerds-red transition-all">0.10mm</button>
+                        <button data-gap="0.15" class="tol-btn py-2 px-2 rounded-lg border bg-nerds-card-subtle text-nerds-muted border-nerds-borderLight hover:border-nerds-red transition-all">0.15mm</button>
+                        <button data-gap="0.20" class="tol-btn py-2 px-2 rounded-lg border bg-nerds-red text-white font-bold border-nerds-red shadow-md">0.20mm</button>
+                        <button data-gap="0.25" class="tol-btn py-2 px-2 rounded-lg border bg-nerds-card-subtle text-nerds-muted border-nerds-borderLight hover:border-nerds-red transition-all">0.25mm</button>
+                        <button data-gap="0.30" class="tol-btn py-2 px-2 rounded-lg border bg-nerds-card-subtle text-nerds-muted border-nerds-borderLight hover:border-nerds-red transition-all">0.30mm</button>
+                        <button data-gap="0.40" class="tol-btn py-2 px-2 rounded-lg border bg-nerds-card-subtle text-nerds-muted border-nerds-borderLight hover:border-nerds-red transition-all">0.40mm</button>
+                    </div>
+                </div>
+
+                <div class="nerds-card-subtle border border-nerds-borderLight rounded-xl p-3 flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-2 px-1 text-[11px] font-mono text-nerds-muted">
+                        <span>Joint Gap Cross-Section View</span>
+                        <span id="tolGapLabel" class="text-nerds-red font-bold">Gap: 0.20 mm (Standard Mechanical Fit)</span>
+                    </div>
+                    <canvas id="tolCanvas" width="400" height="120" class="w-full max-w-full rounded-lg bg-[#07080B] border border-nerds-borderLight"></canvas>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                    <div class="p-3 rounded-xl nerds-card-subtle border border-nerds-borderLight flex items-start space-x-3">
+                        <i class="fa-solid fa-bullseye text-nerds-red mt-0.5"></i>
+                        <div>
+                            <div class="font-bold text-white mb-0.5">Flow Rate Multiplier Calibration</div>
+                            <div class="text-[11px] font-sans text-nerds-muted">Calibrate wall thickness with a single-wall test cube. Over-extrusion instantly closes clearances.</div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="p-3 rounded-xl nerds-card-subtle border border-nerds-borderLight flex items-start space-x-3">
+                        <i class="fa-solid fa-arrows-left-right text-cyan-400 mt-0.5"></i>
                         <div>
-                            <label class="text-xs font-mono text-studio-muted block mb-1">Shore Hardness</label>
-                            <select id="tpuHardness" class="w-full bg-studio-bg border border-studio-border rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                                <option value="95A">95A (Standard / Medium)</option>
-                                <option value="85A">85A (Soft / Flexible)</option>
-                                <option value="70A">70A (Ultra Soft / Rubber)</option>
-                                <option value="60D">60D (Semi-Rigid / Tough)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="text-xs font-mono text-studio-muted block mb-1">Extruder Setup</label>
-                            <select id="tpuExtruder" class="w-full bg-studio-bg border border-studio-border rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-studio-orange">
-                                <option value="direct">Direct Drive (Recommended)</option>
-                                <option value="bowden">Bowden Tube</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3 font-mono text-xs">
-                        <div class="p-3.5 rounded-xl bg-studio-bg border border-studio-border">
-                            <div class="text-[11px] text-studio-orange font-bold uppercase mb-2 flex items-center gap-1.5">
-                                <i class="fa-solid fa-tachograph-digital"></i> Recommended Speeds
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 text-studio-text">
-                                <div>Outer Wall: <span id="tpuOuterSpeed" class="text-studio-cyan font-bold">25 mm/s</span></div>
-                                <div>Inner Wall: <span id="tpuInnerSpeed" class="text-studio-cyan font-bold">35 mm/s</span></div>
-                                <div>Infill Speed: <span id="tpuInfillSpeed" class="text-studio-cyan font-bold">40 mm/s</span></div>
-                                <div>Travel Speed: <span id="tpuTravelSpeed" class="text-studio-cyan font-bold">120 mm/s</span></div>
-                            </div>
-                        </div>
-
-                        <div class="p-3.5 rounded-xl bg-studio-bg border border-studio-border">
-                            <div class="text-[11px] text-studio-cyan font-bold uppercase mb-2 flex items-center gap-1.5">
-                                <i class="fa-solid fa-sliders"></i> Retraction & Flow Parameters
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 text-studio-text">
-                                <div>Retract Dist: <span id="tpuRetractDist" class="text-white font-bold">0.8 mm</span></div>
-                                <div>Retract Speed: <span id="tpuRetractSpeed" class="text-white font-bold">25 mm/s</span></div>
-                                <div>Max Vol Flow: <span id="tpuMaxFlow" class="text-studio-orange font-bold">4.5 mm³/s</span></div>
-                                <div>Fan Speed: <span id="tpuFanSpeed" class="text-white font-bold">20-50%</span></div>
-                            </div>
-                        </div>
-
-                        <div class="p-3 rounded-xl bg-studio-bg border border-studio-border flex justify-between items-center">
-                            <div>
-                                <span class="text-studio-muted">Nozzle Temp: </span>
-                                <span id="tpuNozzleTemp" class="text-white font-bold">220 - 235 °C</span>
-                            </div>
-                            <div>
-                                <span class="text-studio-muted">Bed Temp: </span>
-                                <span id="tpuBedTemp" class="text-white font-bold">40 - 60 °C</span>
-                            </div>
-                        </div>
-
-                        <div class="p-3 rounded-xl bg-studio-orange/10 border border-studio-orange/30 text-[11px] font-sans text-studio-text leading-relaxed">
-                            <div class="font-mono font-bold text-studio-orange mb-1 flex items-center gap-1">
-                                <i class="fa-solid fa-lightbulb"></i> TPU Print Tip:
-                            </div>
-                            <span id="tpuTipText">Dry TPU at 50-55°C for 4-6 hrs prior to printing. Turn OFF high retractions to prevent filament wrapping around feed gears.</span>
+                            <div class="font-bold text-white mb-0.5">Horizontal Expansion Compensation</div>
+                            <div class="text-[11px] font-sans text-nerds-muted">Apply negative offset (-0.05mm to -0.1mm) in your slicer if interlocking grid joints bind.</div>
                         </div>
                     </div>
                 </div>
             </section>
-
-            <!-- CLEARANCE TOLERANCE & FIT TOOL (6 Cols) -->
-            <section class="lg:col-span-6 glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5">
-                <div>
-                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-studio-border">
-                        <h2 class="text-sm font-mono font-bold tracking-wider text-studio-orange uppercase flex items-center gap-2">
-                            <i class="fa-solid fa-arrows-to-line"></i> Clearance & Fit Calibration
-                        </h2>
-                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-studio-border text-studio-cyan">Mechanical Fits</span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="text-xs font-mono text-studio-muted block mb-2">Target Joint Clearance Gap</label>
-                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 font-mono text-xs" id="toleranceBtnGroup">
-                            <button data-gap="0.10" class="tol-btn py-2 px-2 rounded-lg border bg-studio-bg text-studio-muted border-studio-border hover:border-studio-orange transition-all">0.10mm</button>
-                            <button data-gap="0.15" class="tol-btn py-2 px-2 rounded-lg border bg-studio-bg text-studio-muted border-studio-border hover:border-studio-orange transition-all">0.15mm</button>
-                            <button data-gap="0.20" class="tol-btn py-2 px-2 rounded-lg border bg-studio-orange text-black font-bold border-studio-orange shadow-md">0.20mm</button>
-                            <button data-gap="0.25" class="tol-btn py-2 px-2 rounded-lg border bg-studio-bg text-studio-muted border-studio-border hover:border-studio-orange transition-all">0.25mm</button>
-                            <button data-gap="0.30" class="tol-btn py-2 px-2 rounded-lg border bg-studio-bg text-studio-muted border-studio-border hover:border-studio-orange transition-all">0.30mm</button>
-                            <button data-gap="0.40" class="tol-btn py-2 px-2 rounded-lg border bg-studio-bg text-studio-muted border-studio-border hover:border-studio-orange transition-all">0.40mm</button>
-                        </div>
-                    </div>
-
-                    <!-- Cross-Section Graphic Canvas -->
-                    <div class="bg-studio-bg border border-studio-border rounded-xl p-3 mb-4 flex flex-col items-center">
-                        <div class="w-full flex justify-between items-center mb-2 px-1 text-[11px] font-mono text-studio-muted">
-                            <span>Joint Gap Visualizer</span>
-                            <span id="tolGapLabel" class="text-studio-orange font-bold">Gap: 0.20 mm (Standard Fit)</span>
-                        </div>
-                        <canvas id="tolCanvas" width="400" height="120" class="w-full max-w-full rounded-lg bg-[#070A10] border border-studio-border/60"></canvas>
-                    </div>
-
-                    <!-- Calibration Guides -->
-                    <div class="space-y-2.5 font-mono text-xs">
-                        <div class="p-3 rounded-xl bg-studio-bg border border-studio-border flex items-start space-x-3">
-                            <i class="fa-solid fa-bullseye text-studio-orange mt-0.5"></i>
-                            <div>
-                                <div class="font-bold text-white mb-0.5">Flow Rate Multiplier Calibration</div>
-                                <div class="text-[11px] font-sans text-studio-muted">Calibrate wall thickness with a hollow cube. Over-extrusion reduces target clearance gap instantly.</div>
-                            </div>
-                        </div>
-
-                        <div class="p-3 rounded-xl bg-studio-bg border border-studio-border flex items-start space-x-3">
-                            <i class="fa-solid fa-arrows-left-right text-studio-cyan mt-0.5"></i>
-                            <div>
-                                <div class="font-bold text-white mb-0.5">Horizontal Expansion Compensation</div>
-                                <div class="text-[11px] font-sans text-studio-muted">Apply negative offset (-0.05mm to -0.1mm) in slicer if interlocking grid joints slide tight.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
         </div>
 
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-studio-border bg-studio-card/80 py-4 text-center text-xs font-mono text-studio-muted">
-        <p>N.E.R.D.S. 3D PRINT & GRIDFINITY STUDIO &bull; PARAMETRIC EXPORT ENGINE</p>
+    <footer class="border-t border-nerds-border/40 bg-[#0B0C10] py-4 text-center text-xs font-mono text-nerds-muted">
+        <p>N.E.R.D.S. 3D PRINT & GRIDFINITY STUDIO &bull; 100% PRIVATE CLIENT-SIDE ENGINE</p>
     </footer>
 
-    <!-- JAVASCRIPT & THREE.JS EXPORT LOGIC -->
+    <!-- JAVASCRIPT & THREE.JS LOGIC -->
     <script>
-        // --- DEFAULT STATE ---
         const DEFAULTS = {
-            mode: 'single',
-            unitsX: 2,
-            unitsY: 3,
+            unitsX: 3,
+            unitsY: 2,
             unitsZ: 6,
-            divX: 1,
-            divY: 1,
-            cutoutType: 'none',
-            cutoutDepth: 'medium',
             lipToggle: true,
             magnetToggle: true,
             material: 'matte',
-            labelText: '',
-            labelStyle: 'emboss',
 
-            tpuHardness: '95A',
-            tpuExtruder: 'direct',
+            cutoutPreset: 'box',
+            cutoutPosX: 0,
+            cutoutPosY: 0,
+            cutoutPosZ: 4,
+            cutoutRot: 0,
+            cutoutScale: 105,
+
             selectedGap: 0.20
         };
 
         let state = { ...DEFAULTS };
-        let customOverlayMesh = null;
+        let customCutoutMesh = null;
 
-        // TPU Configuration Specs
-        const TPU_SPECS = {
-            '95A': {
-                direct: { outer: 25, inner: 35, infill: 40, travel: 120, retDist: 0.8, retSpeed: 25, flow: 4.5, fan: '20-50%', nozzle: '220 - 235 °C', bed: '40 - 60 °C', tip: 'Standard flexible TPU. Excellent ease of printing on direct drive extruders with minimal retraction tuning required.' },
-                bowden: { outer: 18, inner: 25, infill: 30, travel: 100, retDist: 3.0, retSpeed: 20, flow: 3.5, fan: '20-50%', nozzle: '225 - 240 °C', bed: '50 - 60 °C', tip: 'On Bowden tubes, use Capricorn PTFE tubing and low retraction speeds (20mm/s) to prevent binding.' }
-            },
-            '85A': {
-                direct: { outer: 18, inner: 25, infill: 30, travel: 100, retDist: 0.5, retSpeed: 20, flow: 3.0, fan: '0-30%', nozzle: '225 - 240 °C', bed: '50 - 60 °C', tip: 'Soft TPU. Reduce extrusion speed and disable or limit retractions below 0.5mm to avoid filament wrapping around feed gears.' },
-                bowden: { outer: 12, inner: 18, infill: 20, travel: 80, retDist: 2.0, retSpeed: 15, flow: 2.0, fan: '0-30%', nozzle: '230 - 245 °C', bed: '55 - 65 °C', tip: 'Extreme caution on Bowden. Print very slowly and keep print bed clean with glue stick as a release agent.' }
-            },
-            '70A': {
-                direct: { outer: 12, inner: 15, infill: 20, travel: 80, retDist: 0.2, retSpeed: 15, flow: 1.8, fan: '0-20%', nozzle: '230 - 245 °C', bed: '60 - 70 °C', tip: 'Ultra-soft rubber-like TPU. Turn off retractions completely. Ensure direct drive extruder has zero clearance gap behind drive gear.' },
-                bowden: { outer: 8, inner: 12, infill: 15, travel: 60, retDist: 0.0, retSpeed: 10, flow: 1.2, fan: '0-20%', nozzle: '235 - 250 °C', bed: '60 - 70 °C', tip: 'Bowden printing 70A is not recommended. If necessary, print at ultra-slow speeds (<10mm/s) with zero retraction.' }
-            },
-            '60D': {
-                direct: { outer: 35, inner: 45, infill: 55, travel: 150, retDist: 1.2, retSpeed: 35, flow: 7.0, fan: '40-80%', nozzle: '215 - 230 °C', bed: '40 - 50 °C', tip: 'Semi-rigid tough TPU. Prints easily almost like standard PLA/PETG with higher speed tolerance and excellent layer adhesion.' },
-                bowden: { outer: 28, inner: 38, infill: 45, travel: 130, retDist: 4.0, retSpeed: 30, flow: 5.5, fan: '40-80%', nozzle: '220 - 235 °C', bed: '40 - 55 °C', tip: 'Prints cleanly on Bowden setups with standard TPU settings and mild retractions.' }
-            }
-        };
-
-        // THREE.JS GLOBAL ENGINE VARIABLES
         let scene, camera, renderer, controls;
         let binGroup = null;
 
-        // THREE.JS SCENE INITIALIZATION
         function initThreeJS() {
             const container = document.getElementById('threejsViewport');
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x070A10);
+            scene.background = new THREE.Color(0x07080B);
 
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
-            camera.position.set(120, 140, 160);
+            camera.position.set(130, 150, 180);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
@@ -534,25 +472,22 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
 
-            // Lights
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
             dirLight.position.set(150, 200, 100);
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            const fillLight = new THREE.DirectionalLight(0x00f0ff, 0.3);
+            const fillLight = new THREE.DirectionalLight(0x00f0ff, 0.35);
             fillLight.position.set(-100, -50, -100);
             scene.add(fillLight);
 
-            // Ground Base Grid
-            const gridHelper = new THREE.GridHelper(300, 30, 0xff6b00, 0x1e293b);
+            const gridHelper = new THREE.GridHelper(300, 30, 0xe53935, 0x1f2430);
             gridHelper.position.y = -0.5;
             scene.add(gridHelper);
 
-            // Animation Loop
             function animate() {
                 requestAnimationFrame(animate);
                 controls.update();
@@ -571,7 +506,6 @@
             renderer.setSize(container.clientWidth, container.clientHeight);
         }
 
-        // --- REBUILD 3D GRIDFINITY BIN PARAMETRICALLY ---
         function rebuild3DBin() {
             if (!scene) return;
 
@@ -589,24 +523,23 @@
             const totalD = (state.unitsY * pitch) - 0.5;
             const totalH = state.unitsZ * 7;
 
-            // Material Settings
             let mat;
             if (state.material === 'metallic') {
                 mat = new THREE.MeshStandardMaterial({
-                    color: 0x222a38,
+                    color: 0x272b36,
                     metalness: 0.8,
-                    roughness: 0.2,
+                    roughness: 0.25,
                 });
             } else {
                 mat = new THREE.MeshStandardMaterial({
-                    color: 0xff6b00,
+                    color: 0xe53935,
                     roughness: 0.4,
                     metalness: 0.1
                 });
             }
 
             const darkAccentMat = new THREE.MeshStandardMaterial({
-                color: 0x0f172a,
+                color: 0x13151c,
                 roughness: 0.5
             });
 
@@ -616,49 +549,16 @@
                 roughness: 0.1
             });
 
-            // 1. BASE SOLID BLOCK
+            // Base Solid Block
             const baseGeo = new THREE.BoxGeometry(totalW, floorThick, totalD);
             const baseMesh = new THREE.Mesh(baseGeo, mat);
             baseMesh.position.y = floorThick / 2;
             binGroup.add(baseMesh);
 
-            // 2. OUTER WALLS & CAVITY CREATION
             const wallH = totalH - floorThick;
+            createOuterWalls(binGroup, totalW, totalD, wallH, floorThick, wallThick, mat);
 
-            if (state.mode === 'single') {
-                createOuterWalls(binGroup, totalW, totalD, wallH, floorThick, wallThick, mat);
-            } else {
-                const divX = state.divX;
-                const divY = state.divY;
-
-                const innerW = totalW - (wallThick * 2);
-                const innerD = totalD - (wallThick * 2);
-
-                const compW = (innerW - (wallThick * (divX - 1))) / divX;
-                const compD = (innerD - (wallThick * (divY - 1))) / divY;
-
-                createOuterWalls(binGroup, totalW, totalD, wallH, floorThick, wallThick, mat);
-
-                // Internal Divider Walls X
-                for (let i = 1; i < divX; i++) {
-                    const posX = -totalW / 2 + wallThick + (i * compW) + ((i - 0.5) * wallThick);
-                    const divGeo = new THREE.BoxGeometry(wallThick, wallH, innerD);
-                    const divMesh = new THREE.Mesh(divGeo, mat);
-                    divMesh.position.set(posX, floorThick + (wallH / 2), 0);
-                    binGroup.add(divMesh);
-                }
-
-                // Internal Divider Walls Y
-                for (let j = 1; j < divY; j++) {
-                    const posZ = -totalD / 2 + wallThick + (j * compD) + ((j - 0.5) * wallThick);
-                    const divGeo = new THREE.BoxGeometry(innerW, wallH, wallThick);
-                    const divMesh = new THREE.Mesh(divGeo, mat);
-                    divMesh.position.set(0, floorThick + (wallH / 2), posZ);
-                    binGroup.add(divMesh);
-                }
-            }
-
-            // 3. STACKING LIP
+            // Top Stacking Lip
             if (state.lipToggle) {
                 const lipH = 2.5;
                 const lipGeo = new THREE.BoxGeometry(totalW - 1, lipH, totalD - 1);
@@ -667,12 +567,7 @@
                 binGroup.add(lipMesh);
             }
 
-            // 4. CUTOUT MODIFIERS
-            if (state.cutoutType !== 'none') {
-                applyCutouts3D(binGroup, totalW, totalD, totalH, mat);
-            }
-
-            // 5. BASE MAGNET SOCKETS
+            // Magnet Sockets
             if (state.magnetToggle) {
                 for (let x = 0; x < state.unitsX; x++) {
                     for (let y = 0; y < state.unitsY; y++) {
@@ -690,17 +585,43 @@
                 }
             }
 
-            // 6. CUSTOM TEXT LABELING
-            if (state.labelText && state.labelText.trim() !== '') {
-                applyTextLabel3D(binGroup, totalW, totalD, totalH);
+            // Movable Cutout Cavity Visualizer / Tool Pocket
+            const cutoutMat = new THREE.MeshStandardMaterial({
+                color: 0x00f0ff,
+                roughness: 0.2,
+                metalness: 0.5,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            const scaleFactor = state.cutoutScale / 100.0;
+            const cGroup = new THREE.Group();
+
+            if (state.cutoutPreset === 'box') {
+                const bGeo = new THREE.BoxGeometry(40 * scaleFactor, 30, 60 * scaleFactor);
+                const bMesh = new THREE.Mesh(bGeo, cutoutMat);
+                cGroup.add(bMesh);
+            } else if (state.cutoutPreset === 'cylinder') {
+                const cGeo = new THREE.CylinderGeometry(20 * scaleFactor, 20 * scaleFactor, 30, 32);
+                const cMesh = new THREE.Mesh(cGeo, cutoutMat);
+                cGroup.add(cMesh);
+            } else if (state.cutoutPreset === 'flipper') {
+                const fGeo = new THREE.BoxGeometry(32 * scaleFactor, 22, 75 * scaleFactor);
+                const fMesh = new THREE.Mesh(fGeo, cutoutMat);
+                cGroup.add(fMesh);
+            } else if (state.cutoutPreset === 'pliers') {
+                const pGeo = new THREE.BoxGeometry(70 * scaleFactor, 20, 45 * scaleFactor);
+                const pMesh = new THREE.Mesh(pGeo, cutoutMat);
+                cGroup.add(pMesh);
+            } else if (state.cutoutPreset === 'customstl' && customCutoutMesh) {
+                const cloned = customCutoutMesh.clone();
+                cloned.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                cGroup.add(cloned);
             }
 
-            // 7. CUSTOM STL OVERLAY MESH
-            if (customOverlayMesh) {
-                const clonedMesh = customOverlayMesh.clone();
-                clonedMesh.position.set(0, floorThick + 2, 0);
-                binGroup.add(clonedMesh);
-            }
+            cGroup.position.set(state.cutoutPosX, state.cutoutPosZ + 10, state.cutoutPosY);
+            cGroup.rotation.y = THREE.MathUtils.degToRad(state.cutoutRot);
+            binGroup.add(cGroup);
 
             scene.add(binGroup);
         }
@@ -723,65 +644,6 @@
             group.add(northWall, southWall, eastWall, westWall);
         }
 
-        function applyCutouts3D(group, tw, td, th, mat) {
-            const depthFactor = state.cutoutDepth === 'shallow' ? 0.25 : state.cutoutDepth === 'medium' ? 0.5 : 0.75;
-            const cutoutH = th * depthFactor;
-
-            const accentMat = new THREE.MeshStandardMaterial({
-                color: 0x00f0ff,
-                transparent: true,
-                opacity: 0.8
-            });
-
-            if (state.cutoutType === 'thumb') {
-                const scoopGeo = new THREE.CylinderGeometry(15, 15, tw * 0.6, 16);
-                const scoop = new THREE.Mesh(scoopGeo, accentMat);
-                scoop.rotation.z = Math.PI / 2;
-                scoop.position.set(0, th - (cutoutH / 2), td / 2);
-                group.add(scoop);
-            } else if (state.cutoutType === 'label') {
-                const labelGeo = new THREE.BoxGeometry(tw * 0.7, 4, 12);
-                const label = new THREE.Mesh(labelGeo, accentMat);
-                label.rotation.x = Math.PI / 6;
-                label.position.set(0, th - 2, td / 2 - 4);
-                group.add(label);
-            } else if (state.cutoutType === 'side') {
-                const sideGeo = new THREE.BoxGeometry(8, cutoutH, td * 0.4);
-                const sideL = new THREE.Mesh(sideGeo, accentMat);
-                sideL.position.set(-tw / 2, th - (cutoutH / 2), 0);
-
-                const sideR = new THREE.Mesh(sideGeo, accentMat);
-                sideR.position.set(tw / 2, th - (cutoutH / 2), 0);
-                group.add(sideL, sideR);
-            }
-        }
-
-        function applyTextLabel3D(group, tw, td, th) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-
-            ctx.fillStyle = '#131B2A';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.font = 'Bold 48px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = state.labelStyle === 'emboss' ? '#FF6B00' : '#00F0FF';
-            ctx.fillText(state.labelText.toUpperCase(), canvas.width / 2, canvas.height / 2);
-
-            const texture = new THREE.CanvasTexture(canvas);
-            const labelMat = new THREE.MeshBasicMaterial({ map: texture });
-            const labelGeo = new THREE.PlaneGeometry(Math.min(tw * 0.8, 60), 12);
-            const labelMesh = new THREE.Mesh(labelGeo, labelMat);
-
-            const zOffset = state.labelStyle === 'emboss' ? 0.2 : -0.2;
-            labelMesh.position.set(0, th * 0.4, td / 2 + 0.1 + zOffset);
-            group.add(labelMesh);
-        }
-
-        // --- UPDATE STATS & READOUTS ---
         function updateCalculatedStats() {
             const x = state.unitsX;
             const y = state.unitsY;
@@ -800,26 +662,16 @@
             document.getElementById('heightMmDisplay').innerText = `${height.toFixed(1)} mm (${z}U)`;
         }
 
-        // --- EXPORT FUNCTIONALITY: STL & 3MF ---
         function exportToSTL() {
             if (!binGroup) return;
-
             const exporter = new THREE.STLExporter();
             const result = exporter.parse(binGroup, { binary: true });
-            
             const blob = new Blob([result], { type: 'application/octet-stream' });
-            const filename = `Gridfinity_${state.unitsX}x${state.unitsY}x${state.unitsZ}U.stl`;
-
-            downloadBlob(blob, filename);
+            downloadBlob(blob, `Gridfinity_Cutout_${state.unitsX}x${state.unitsY}x${state.unitsZ}U.stl`);
         }
 
         async function exportTo3MF() {
             if (!binGroup) return;
-
-            const exporter = new THREE.STLExporter();
-            const stlData = exporter.parse(binGroup, { binary: false });
-
-            // Generate 3MF XML Container structure using JSZip
             const zip = new JSZip();
 
             zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8"?>
@@ -833,12 +685,11 @@
  <Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
 </Relationships>`);
 
-            // Convert Three.js geometry to 3MF XML Mesh format
             const meshXml = generate3MFMeshXML();
 
             zip.file("3D/3dmodel.model", `<?xml version="1.0" encoding="UTF-8"?>
 <model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel">
- <metadata name="Title">Gridfinity Parametric Bin</metadata>
+ <metadata name="Title">Gridfinity Movable Cutout Tray</metadata>
  <metadata name="Designer">N.E.R.D.S. Studio</metadata>
  <resources>
   <object id="1" type="model">
@@ -851,8 +702,7 @@
 </model>`);
 
             const content = await zip.generateAsync({ type: "blob" });
-            const filename = `Gridfinity_${state.unitsX}x${state.unitsY}x${state.unitsZ}U.3mf`;
-            downloadBlob(content, filename);
+            downloadBlob(content, `Gridfinity_Cutout_${state.unitsX}x${state.unitsY}x${state.unitsZ}U.3mf`);
         }
 
         function generate3MFMeshXML() {
@@ -905,8 +755,7 @@
             URL.revokeObjectURL(link.href);
         }
 
-        // --- CUSTOM STL FILE UPLOAD ---
-        function handleStlUpload(event) {
+        function handleCutoutStlUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
@@ -919,46 +768,20 @@
                 geometry.center();
 
                 const material = new THREE.MeshStandardMaterial({ color: 0x00f0ff, roughness: 0.3 });
-                customOverlayMesh = new THREE.Mesh(geometry, material);
+                customCutoutMesh = new THREE.Mesh(geometry, material);
                 
-                // Auto scale down if oversized
                 geometry.computeBoundingBox();
                 const box = geometry.boundingBox;
                 const maxDim = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
-                if (maxDim > 30) {
-                    const scale = 30 / maxDim;
-                    customOverlayMesh.scale.set(scale, scale, scale);
+                if (maxDim > 40) {
+                    const scale = 40 / maxDim;
+                    customCutoutMesh.scale.set(scale, scale, scale);
                 }
 
-                document.getElementById('stlStatus').innerText = `Loaded: ${file.name}`;
-                document.getElementById('clearStlBtn').classList.remove('hidden');
-
+                document.getElementById('cutoutStlStatus').innerText = `Loaded: ${file.name}`;
                 rebuild3DBin();
             };
             reader.readAsArrayBuffer(file);
-        }
-
-        // --- TPU & TOLERANCE UI CALCULATORS ---
-        function updateTPUSettings() {
-            const hardness = document.getElementById('tpuHardness').value;
-            const setup = document.getElementById('tpuExtruder').value;
-
-            const spec = TPU_SPECS[hardness][setup];
-
-            document.getElementById('tpuOuterSpeed').innerText = `${spec.outer} mm/s`;
-            document.getElementById('tpuInnerSpeed').innerText = `${spec.inner} mm/s`;
-            document.getElementById('tpuInfillSpeed').innerText = `${spec.infill} mm/s`;
-            document.getElementById('tpuTravelSpeed').innerText = `${spec.travel} mm/s`;
-
-            document.getElementById('tpuRetractDist').innerText = `${spec.retDist} mm`;
-            document.getElementById('tpuRetractSpeed').innerText = `${spec.retSpeed} mm/s`;
-            document.getElementById('tpuMaxFlow').innerText = `${spec.flow} mm³/s`;
-            document.getElementById('tpuFanSpeed').innerText = spec.fan;
-
-            document.getElementById('tpuNozzleTemp').innerText = spec.nozzle;
-            document.getElementById('tpuBedTemp').innerText = spec.bed;
-
-            document.getElementById('tpuTipText').innerText = spec.tip;
         }
 
         function updateTolerance(gap) {
@@ -967,9 +790,9 @@
             document.querySelectorAll('.tol-btn').forEach(btn => {
                 const bGap = parseFloat(btn.getAttribute('data-gap'));
                 if (Math.abs(bGap - state.selectedGap) < 0.01) {
-                    btn.className = "tol-btn py-2 px-2 rounded-lg border bg-studio-orange text-black font-bold border-studio-orange shadow-md";
+                    btn.className = "tol-btn py-2 px-2 rounded-lg border bg-nerds-red text-white font-bold border-nerds-red shadow-md";
                 } else {
-                    btn.className = "tol-btn py-2 px-2 rounded-lg border bg-studio-bg text-studio-muted border-studio-border hover:border-studio-orange transition-all";
+                    btn.className = "tol-btn py-2 px-2 rounded-lg border bg-nerds-card-subtle text-nerds-muted border-nerds-borderLight hover:border-nerds-red transition-all";
                 }
             });
 
@@ -991,8 +814,8 @@
             const centerY = canvas.height / 2;
             const gapScale = gap * 90;
 
-            ctx.fillStyle = '#1E293B';
-            ctx.strokeStyle = '#64748B';
+            ctx.fillStyle = '#181B24';
+            ctx.strokeStyle = '#94A3B8';
             ctx.lineWidth = 1.5;
 
             ctx.beginPath();
@@ -1005,8 +828,8 @@
             ctx.fill();
             ctx.stroke();
 
-            ctx.fillStyle = '#FF6B00';
-            ctx.strokeStyle = '#FFA057';
+            ctx.fillStyle = '#E53935';
+            ctx.strokeStyle = '#F44336';
             ctx.beginPath();
             ctx.roundRect(80, centerY - 12, canvas.width - 160, 24, 4);
             ctx.fill();
@@ -1031,68 +854,55 @@
             ctx.fill();
         }
 
-        // --- RESET AND EVENT BINDINGS ---
         function resetDefaults() {
             state = { ...DEFAULTS };
-            customOverlayMesh = null;
+            customCutoutMesh = null;
 
             document.getElementById('gfUnitsX').value = state.unitsX;
             document.getElementById('gfUnitsY').value = state.unitsY;
             document.getElementById('gfUnitsZ').value = state.unitsZ;
             document.getElementById('gfHeightSlider').value = state.unitsZ;
-            document.getElementById('gfDivX').value = state.divX;
-            document.getElementById('gfDivY').value = state.divY;
-            document.getElementById('cutoutType').value = state.cutoutType;
-            document.getElementById('cutoutDepth').value = state.cutoutDepth;
             document.getElementById('gfLipToggle').checked = state.lipToggle;
             document.getElementById('gfMagnetToggle').checked = state.magnetToggle;
-            document.getElementById('labelText').value = '';
-            document.getElementById('labelStyle').value = 'emboss';
 
-            document.getElementById('tpuHardness').value = state.tpuHardness;
-            document.getElementById('tpuExtruder').value = state.tpuExtruder;
+            document.getElementById('cutoutPreset').value = state.cutoutPreset;
+            document.getElementById('cutoutPosX').value = state.cutoutPosX;
+            document.getElementById('cutoutPosY').value = state.cutoutPosY;
+            document.getElementById('cutoutPosZ').value = state.cutoutPosZ;
+            document.getElementById('cutoutRot').value = state.cutoutRot;
+            document.getElementById('cutoutScale').value = state.cutoutScale;
 
-            document.getElementById('stlStatus').innerText = "No custom mesh overlay loaded.";
-            document.getElementById('clearStlBtn').classList.add('hidden');
+            document.getElementById('valPosX').innerText = `${state.cutoutPosX}.0 mm`;
+            document.getElementById('valPosY').innerText = `${state.cutoutPosY}.0 mm`;
+            document.getElementById('valPosZ').innerText = `${state.cutoutPosZ}.0 mm`;
+            document.getElementById('valRot').innerText = `${state.cutoutRot}°`;
+            document.getElementById('valScale').innerText = `${state.cutoutScale}%`;
 
-            setBinMode('single');
+            document.getElementById('cutoutStlBox').classList.add('hidden');
+            document.getElementById('cutoutStlStatus').innerText = "No custom device STL loaded.";
+
             updateCalculatedStats();
             rebuild3DBin();
-            updateTPUSettings();
             updateTolerance(state.selectedGap);
         }
 
-        function setBinMode(mode) {
-            state.mode = mode;
-            const singleBtn = document.getElementById('modeSingleBtn');
-            const subBtn = document.getElementById('modeSubdividedBtn');
-            const subBox = document.getElementById('subdividerBox');
-
-            if (mode === 'single') {
-                singleBtn.className = "py-2 px-3 text-xs font-mono rounded-xl border border-studio-orange bg-studio-orange/10 text-studio-orange font-bold transition-all flex items-center justify-center gap-1.5";
-                subBtn.className = "py-2 px-3 text-xs font-mono rounded-xl border border-studio-border bg-studio-bg text-studio-muted hover:border-studio-orange transition-all flex items-center justify-center gap-1.5";
-                subBox.classList.add('opacity-50', 'pointer-events-none');
-            } else {
-                subBtn.className = "py-2 px-3 text-xs font-mono rounded-xl border border-studio-orange bg-studio-orange/10 text-studio-orange font-bold transition-all flex items-center justify-center gap-1.5";
-                singleBtn.className = "py-2 px-3 text-xs font-mono rounded-xl border border-studio-border bg-studio-bg text-studio-muted hover:border-studio-orange transition-all flex items-center justify-center gap-1.5";
-                subBox.classList.remove('opacity-50', 'pointer-events-none');
-            }
-            rebuild3DBin();
-        }
-
-        // --- INITIALIZATION ---
         window.onload = function () {
             initThreeJS();
 
-            // Event Listeners
-            document.getElementById('modeSingleBtn').addEventListener('click', () => setBinMode('single'));
-            document.getElementById('modeSubdividedBtn').addEventListener('click', () => setBinMode('subdivided'));
-
-            const bindInput = (id, prop, isNum = true) => {
+            const bindInput = (id, prop, isNum = true, isFloat = false) => {
                 document.getElementById(id).addEventListener('input', (e) => {
-                    state[prop] = isNum ? parseInt(e.target.value) || 1 : e.target.value;
+                    const val = isFloat ? parseFloat(e.target.value) : (isNum ? parseInt(e.target.value) || 0 : e.target.value);
+                    state[prop] = val;
+
                     if (id === 'gfUnitsZ') document.getElementById('gfHeightSlider').value = state.unitsZ;
                     if (id === 'gfHeightSlider') document.getElementById('gfUnitsZ').value = state.unitsZ;
+
+                    if (id === 'cutoutPosX') document.getElementById('valPosX').innerText = `${val}.0 mm`;
+                    if (id === 'cutoutPosY') document.getElementById('valPosY').innerText = `${val}.0 mm`;
+                    if (id === 'cutoutPosZ') document.getElementById('valPosZ').innerText = `${val}.0 mm`;
+                    if (id === 'cutoutRot') document.getElementById('valRot').innerText = `${val}°`;
+                    if (id === 'cutoutScale') document.getElementById('valScale').innerText = `${val}% (Custom Fit)`;
+
                     updateCalculatedStats();
                     rebuild3DBin();
                 });
@@ -1102,58 +912,52 @@
             bindInput('gfUnitsY', 'unitsY');
             bindInput('gfUnitsZ', 'unitsZ');
             bindInput('gfHeightSlider', 'unitsZ');
-            bindInput('gfDivX', 'divX');
-            bindInput('gfDivY', 'divY');
 
-            document.getElementById('cutoutType').addEventListener('change', (e) => { state.cutoutType = e.target.value; rebuild3DBin(); });
-            document.getElementById('cutoutDepth').addEventListener('change', (e) => { state.cutoutDepth = e.target.value; rebuild3DBin(); });
+            bindInput('cutoutPosX', 'cutoutPosX');
+            bindInput('cutoutPosY', 'cutoutPosY');
+            bindInput('cutoutPosZ', 'cutoutPosZ');
+            bindInput('cutoutRot', 'cutoutRot');
+            bindInput('cutoutScale', 'cutoutScale');
+
             document.getElementById('gfLipToggle').addEventListener('change', (e) => { state.lipToggle = e.target.checked; rebuild3DBin(); });
             document.getElementById('gfMagnetToggle').addEventListener('change', (e) => { state.magnetToggle = e.target.checked; rebuild3DBin(); });
 
-            document.getElementById('labelText').addEventListener('input', (e) => { state.labelText = e.target.value; rebuild3DBin(); });
-            document.getElementById('labelStyle').addEventListener('change', (e) => { state.labelStyle = e.target.value; rebuild3DBin(); });
+            document.getElementById('cutoutPreset').addEventListener('change', (e) => {
+                state.cutoutPreset = e.target.value;
+                const stlBox = document.getElementById('cutoutStlBox');
+                if (state.cutoutPreset === 'customstl') {
+                    stlBox.classList.remove('hidden');
+                } else {
+                    stlBox.classList.add('hidden');
+                }
+                rebuild3DBin();
+            });
+
+            document.getElementById('uploadCutoutStlBtn').addEventListener('click', () => document.getElementById('cutoutStlInput').click());
+            document.getElementById('cutoutStlInput').addEventListener('change', handleCutoutStlUpload);
 
             document.getElementById('matToggleBtn').addEventListener('click', () => {
                 state.material = state.material === 'matte' ? 'metallic' : 'matte';
-                document.getElementById('matLabel').innerText = state.material === 'matte' ? 'Matte Plastic' : 'Metallic';
+                document.getElementById('matLabel').innerText = state.material === 'matte' ? 'Matte Red' : 'Metallic Slate';
                 rebuild3DBin();
             });
 
             document.getElementById('recenterCamBtn').addEventListener('click', () => {
-                camera.position.set(120, 140, 160);
+                camera.position.set(130, 150, 180);
                 controls.target.set(0, 0, 0);
             });
 
             document.getElementById('resetDefaultsBtn').addEventListener('click', resetDefaults);
 
-            // Export Actions
             document.getElementById('exportStlBtn').addEventListener('click', exportToSTL);
             document.getElementById('export3mfBtn').addEventListener('click', exportTo3MF);
 
-            // File Uploads
-            document.getElementById('uploadStlBtn').addEventListener('click', () => document.getElementById('stlFileInput').click());
-            document.getElementById('stlFileInput').addEventListener('change', handleStlUpload);
-            document.getElementById('clearStlBtn').addEventListener('click', () => {
-                customOverlayMesh = null;
-                document.getElementById('stlStatus').innerText = "No custom mesh overlay loaded.";
-                document.getElementById('clearStlBtn').classList.add('hidden');
-                rebuild3DBin();
-            });
-
-            // TPU & Tolerance Controls
-            document.getElementById('tpuHardness').addEventListener('change', updateTPUSettings);
-            document.getElementById('tpuExtruder').addEventListener('change', updateTPUSettings);
-
             document.querySelectorAll('.tol-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    updateTolerance(e.target.getAttribute('data-gap'));
-                });
+                btn.addEventListener('click', () => updateTolerance(btn.getAttribute('data-gap')));
             });
 
-            // Initial Calculations
             updateCalculatedStats();
             rebuild3DBin();
-            updateTPUSettings();
             updateTolerance(0.20);
         };
     </script>
